@@ -18,11 +18,12 @@ class RedirectIfAuthenticated
     {
         if (Auth::guard($guard)->check()) {
             if ($guard == 'admin') {
-                return redirect(RouteServiceProvider::ADMIN_DASHBOARD);
+                return redirect()->route('admin.dashboard');
             } elseif ($guard == 'teacher') {
                 return redirect(RouteServiceProvider::TEACHER_DASHBOARD);
             } else {
-                return redirect(RouteServiceProvider::HOME);
+                // Website uses locale-prefixed routes; avoid hard-coded /dashboard.
+                return redirect()->route('home');
             }
         }
 

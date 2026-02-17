@@ -17,8 +17,10 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    public const HOME = '/dashboard';
+    // Website uses localized routes; avoid redirecting to /dashboard which may 404.
+    public const HOME = '/';
 
+    // Kept for legacy references (prefer route('admin.dashboard') instead).
     public const ADMIN_DASHBOARD = 'admin/dashboard';
 
     /**
