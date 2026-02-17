@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ProductsImport;
 use App\Services\Services\ERP\ERPService;
 use Illuminate\Support\Str; // مكتبة للنصوص
+use Illuminate\Support\Facades\Cache;
  
 class ProductController extends Controller
 {
@@ -66,34 +67,40 @@ class ProductController extends Controller
         // التحقق: نطلب أن تكون القيمة إما gems أو codes
         $request->validate([
             'name' => 'required|string|max:255',
-            'price' => 'required|numeric',
-            'type_id' => 'required|in:gems,codes', 
+            'price' => 'required|numeric|min:0',
+            // NOTE: this field is actually the service type (gems/codes)
+            'type_id' => 'required|in:gems,codes',
         ]);
  
         try {
-            \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
- 
             // نأخذ أول قسم ونوع موجودين لتجنب الأخطاء
-            $cat = \DB::table('categories')->first();
-            $type = \DB::table('types')->first(); 
- 
-            $slug = \Illuminate\Support\Str::slug($request->name) . '-' . time();
- 
+            $categoryId = \DB::table('categories')->value('id');
+            $typeId = \DB::table('types')->value('id');
+
+            if (! $categoryId) {
+                return redirect()->back()->withErrors(['error' => 'لا يوجد تصنيف (Category) في النظام. أضف تصنيف واحد على الأقل ثم أعد المحاولة.']);
+            }
+
+            $baseSlug = Str::slug($request->name) ?: ('charge-'.time());
+            $slug = $baseSlug.'-'.Str::lower(Str::random(6)).'-'.time();
+
+            // SKU should be unique enough (even on fast repeated submits)
+            $sku = 'CHG-'.Str::lower(Str::random(6)).'-'.time();
+
             $id = \DB::table('products')->insertGetId([
                 'slug'         => $slug,
                 'type'         => 'simple',
-                'category_id'  => $cat ? $cat->id : 5, 
-                'type_id'      => $type ? $type->id : 2, 
-                'service_type' => $request->type_id, // ✅ هنا نحفظ القيمة الجديدة (gems/codes)
+                'category_id'  => $categoryId,
+                'type_id'      => $typeId ?: null,
+                'service_type' => $request->type_id, // gems/codes
                 'price'        => $request->price,
                 'stock'        => 9999,
-                'sku'          => 'CHG-' . time(),
+                'sku'          => $sku,
                 'status'       => 'published',
+                'published_at' => now(),
                 'created_at'   => now(),
                 'updated_at'   => now(),
             ]);
- 
-            \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
  
             // حفظ الاسم في الترجمة
             try {
@@ -102,8 +109,23 @@ class ProductController extends Controller
                     ['product_id' => $id, 'locale' => 'en', 'name' => $request->name, 'description' => $request->name],
                 ]);
             } catch (\Exception $e) {}
+
+            // مسح كاش صفحات الشحن/الأكواد حتى تظهر الباقات مباشرة
+            $locales = array_keys(config('laravellocalization.supportedLocales', []));
+            if (empty($locales)) {
+                $locales = ['ar', 'en'];
+            }
+
+            foreach ($locales as $locale) {
+                if ($request->type_id === 'gems') {
+                    Cache::forget("diamonds.charge.$locale");
+                }
+                if ($request->type_id === 'codes') {
+                    Cache::forget("diamonds.codes.$locale");
+                }
+            }
  
-            return redirect()->back()->with('success', 'تم إضافة الباقة بنجاح وتصنيفها بشكل صحيح! 🎉');
+            return redirect()->back()->with('success', 'تم إضافة الباقة بنجاح ✅ وستظهر مباشرة في القسم.');
  
         } catch (\Exception $e) {
             dd($e->getMessage());
