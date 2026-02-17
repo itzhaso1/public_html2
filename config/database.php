@@ -15,8 +15,8 @@ return [
     |
     */
 
-   // Production-safe default: prefer MySQL unless explicitly set to sqlite.
-   'default' => env('DB_CONNECTION', 'mysql'),
+   // Keep Laravel default; production should set DB_CONNECTION explicitly in .env
+   'default' => env('DB_CONNECTION', 'sqlite'),
 
 
     /*
