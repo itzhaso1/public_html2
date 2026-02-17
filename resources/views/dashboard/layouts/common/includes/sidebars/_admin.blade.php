@@ -39,13 +39,13 @@
             <div class="menu-item">
                 <a class="menu-link {{ is_active('admin.sections.*') }}" href="{{ route('admin.sections.index') }}">
                     <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
-                    <span class="menu-title">أقسام الصفحة الرئيسية</span>
+                    <span class="menu-title">الأقسام</span>
                 </a>
             </div>
             <div class="menu-item">
                 <a class="menu-link {{ is_active('admin.categories.*') }}" href="{{ route('admin.categories.index') }}">
                     <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
-                    <span class="menu-title">التصنيفات (الأقسام)</span>
+                    <span class="menu-title">التصنيفات</span>
                 </a>
             </div>
             <div class="menu-item">
