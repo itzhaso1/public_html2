@@ -5,7 +5,9 @@ use App\Http\Controllers\Auth\Manager;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
-Route::middleware('guest')->group(function () {
+// Important: use the correct guard for admin/manager login pages.
+// Otherwise, a logged-in website user (web guard) will be redirected to home and can't access admin login.
+Route::middleware('guest:admin')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('login', [Admin\AdminAuthenticatedSessionController::class, 'create'])->name('admin.login');
         Route::post('login', [Admin\AdminAuthenticatedSessionController::class, 'store'])->name('admin.post.login');
@@ -14,7 +16,9 @@ Route::middleware('guest')->group(function () {
         Route::get('reset/password/{token}', [Admin\AdminAuthenticatedSessionController::class, 'reset_password'])->name('admin.reset.password');
         Route::post('reset/password/{token}', [Admin\AdminAuthenticatedSessionController::class, 'do_reset_password'])->name('admin.do.reset.password');
     });
-    
+});
+
+Route::middleware('guest:manager')->group(function () {
     Route::prefix('manager')->group(function () {
         Route::get('login', [Manager\ManagerAuthenticatedSessionController::class, 'create'])->name('manager.login');
         Route::post('login', [Manager\ManagerAuthenticatedSessionController::class, 'store'])->name('manager.post.login');
