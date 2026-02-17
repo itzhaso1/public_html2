@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Services\Integrations\Shop2TopUp\Shop2TopUpService;
+use Illuminate\Http\JsonResponse;
 
 class ManualPaymentController extends Controller
 {
@@ -121,6 +123,33 @@ class ManualPaymentController extends Controller
         }
 
         return redirect()->route('website.diamonds.manual_payment.thanks', ['reference' => $mpr->reference]);
+    }
+
+    public function checkPlayerName(Request $request): JsonResponse
+    {
+        abort_unless(config('bank.enabled'), 404);
+
+        $data = $request->validate([
+            'player_id' => ['required', 'string', 'min:3', 'max:64'],
+        ]);
+
+        $playerId = trim((string) $data['player_id']);
+        $cacheKey = 'shop2topup.player.' . sha1($playerId);
+
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ($cached['success'] ?? false) === true) {
+            return response()->json(array_merge(['cached' => true], $cached));
+        }
+
+        $service = new Shop2TopUpService();
+        $res = $service->checkPlayer($playerId);
+
+        // Cache only successful lookups to reduce API calls and avoid freezes.
+        if (($res['success'] ?? false) === true && !empty($res['player_name'])) {
+            Cache::put($cacheKey, $res, now()->addHours(12));
+        }
+
+        return response()->json($res);
     }
 
     public function thanks(string $reference)

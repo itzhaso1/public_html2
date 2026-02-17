@@ -87,6 +87,9 @@ Route::group(
         Route::post('diamonds/{product}/manual-payment', [Website\ManualPaymentController::class, 'store'])
             ->middleware('auth')
             ->name('website.diamonds.manual_payment.store');
+        Route::post('diamonds/check-player', [Website\ManualPaymentController::class, 'checkPlayerName'])
+            ->middleware(['auth', 'throttle:5,1'])
+            ->name('website.diamonds.check_player');
         Route::get('diamonds/manual-payment/thanks/{reference}', [Website\ManualPaymentController::class, 'thanks'])
             ->name('website.diamonds.manual_payment.thanks');
  

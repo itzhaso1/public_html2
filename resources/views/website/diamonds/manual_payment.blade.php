@@ -67,9 +67,16 @@
                 @unless($isCodes)
                     <div>
                         <label class="block text-sm font-bold text-gray-800 mb-1">Player ID / ID الحساب</label>
-                        <input type="text" name="player_id" value="{{ old('player_id') }}"
-                               class="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-yellow-400/60"
-                               placeholder="مثال: 123456789" required>
+                        <div class="flex gap-2">
+                            <input id="playerIdInput" type="text" name="player_id" value="{{ old('player_id') }}"
+                                   class="flex-1 w-full rounded-xl border border-gray-200 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-yellow-400/60"
+                                   placeholder="مثال: 123456789" required>
+                            <button id="checkPlayerBtn" type="button"
+                                    class="whitespace-nowrap rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-extrabold hover:bg-gray-50 transition">
+                                تحقق من الاسم
+                            </button>
+                        </div>
+                        <div id="playerCheckResult" class="mt-2 text-xs"></div>
                         @error('player_id')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                     </div>
                 @endunless
@@ -99,4 +106,70 @@
     </div>
 </section>
 @endsection
+
+@push('js')
+@unless($isCodes)
+<script>
+  (function () {
+    const btn = document.getElementById('checkPlayerBtn');
+    const input = document.getElementById('playerIdInput');
+    const out = document.getElementById('playerCheckResult');
+    if (!btn || !input || !out) return;
+
+    const csrf = @json(csrf_token());
+    const url = @json(route('website.diamonds.check_player'));
+
+    const setMsg = (html, cls) => {
+      out.className = 'mt-2 text-xs ' + (cls || '');
+      out.innerHTML = html;
+    };
+
+    btn.addEventListener('click', async () => {
+      const playerId = (input.value || '').trim();
+      if (playerId.length < 3) {
+        setMsg('ضع Player ID صحيح.', 'text-red-600');
+        return;
+      }
+
+      btn.disabled = true;
+      setMsg('جارِ التحقق...', 'text-gray-500');
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrf,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ player_id: playerId })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          setMsg('حدث خطأ أثناء التحقق. حاول لاحقاً.', 'text-red-600');
+          return;
+        }
+
+        if (data.success === true) {
+          const name = data.player_name ? String(data.player_name) : '—';
+          const region = data.region ? String(data.region) : '—';
+          const cached = data.cached ? ' (cached)' : '';
+          setMsg(`✅ الاسم: <b>${name}</b> — Region: <b>${region}</b>${cached}`, 'text-green-700');
+        } else {
+          const msg = data.msg ? String(data.msg) : 'فشل التحقق';
+          setMsg(`❌ ${msg}`, 'text-red-600');
+        }
+      } catch (e) {
+        setMsg('فشل الاتصال. حاول لاحقاً.', 'text-red-600');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  })();
+</script>
+@endunless
+@endpush
 

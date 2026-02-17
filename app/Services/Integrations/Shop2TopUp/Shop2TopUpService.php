@@ -146,5 +146,55 @@ class Shop2TopUpService
 
         return array_merge(['success' => (bool) ($data['success'] ?? false)], $data);
     }
+
+    /**
+     * Check player name/region for a given playerID.
+     *
+     * @return array{success:bool, player_name?:string, region?:string, msg?:string}
+     */
+    public function checkPlayer(string $playerId): array
+    {
+        $playerId = trim($playerId);
+        if (mb_strlen($playerId) < 3) {
+            return ['success' => false, 'msg' => 'WRONG_ID'];
+        }
+
+        $key = $this->apiKey();
+        if ($key === '') {
+            return ['success' => false, 'msg' => 'SHOP2TOPUP_API_KEY غير مضبوط'];
+        }
+
+        $timeout = (int) config('services.shop2topup.timeout', 20);
+
+        $response = Http::timeout($timeout)
+            ->acceptJson()
+            ->withHeaders([
+                'Authorization' => 'Bearer ' . $key,
+            ])
+            ->post($this->baseUrl() . '/id', [
+                'playerID' => $playerId,
+            ]);
+
+        if (! $response->successful()) {
+            $json = $response->json();
+            $msg = is_array($json) ? ($json['msg'] ?? null) : null;
+            return [
+                'success' => false,
+                'msg' => $msg ?: ('HTTP ' . $response->status()),
+            ];
+        }
+
+        $data = $response->json();
+        if (! is_array($data)) {
+            return ['success' => false, 'msg' => 'رد غير صالح من المزود'];
+        }
+
+        return [
+            'success' => (bool) ($data['success'] ?? false),
+            'player_name' => isset($data['player_name']) ? (string) $data['player_name'] : null,
+            'region' => isset($data['region']) ? (string) $data['region'] : null,
+            'msg' => isset($data['msg']) ? (string) $data['msg'] : null,
+        ];
+    }
 }
 
