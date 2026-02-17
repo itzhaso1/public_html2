@@ -34,6 +34,10 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
         Route::post('products/import', [Dashboard\ProductController::class, 'import'])->name('products.import');
         Route::post('products/test-erp-connection', [Dashboard\ProductController::class, 'exportProductsToERP'])->name('test-erp-connection');
  
+        // التصنيفات (الأقسام)
+        Route::resource('categories', Dashboard\CategoryController::class);
+        Route::post('categories/import', [Dashboard\CategoryController::class, 'import'])->name('categories.import');
+
         Route::resource('users', Dashboard\UserController::class)->names('user');
 
         Route::prefix('manual-payments')->as('manual_payments.')->group(function () {
