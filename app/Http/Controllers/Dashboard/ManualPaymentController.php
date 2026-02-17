@@ -151,7 +151,8 @@ class ManualPaymentController extends Controller
             // Try to avoid REFUND_REGION by picking a region-matching offer if possible.
             $playerGroup = $this->normalizeShop2TopUpOfferGroupFromRegion($check['region'] ?? null);
             $productGroup = $this->normalizeShop2TopUpOfferGroupFromName($product?->name ?? null);
-            if ($playerGroup !== $productGroup) {
+            // Global offers are treated as universal (do not block by region).
+            if ($productGroup !== 'GLOBAL' && $playerGroup !== $productGroup) {
                 $amountKey = $this->extractDiamondAmountKey($product?->name ?? null);
                 if ($amountKey) {
                     $alt = \App\Models\Product::query()
@@ -173,10 +174,6 @@ class ManualPaymentController extends Controller
 
                     if ($alt && (int) ($alt->itemID ?? 0) > 0) {
                         $offerId = (int) $alt->itemID;
-                    } else {
-                        return back()->withErrors([
-                            'error' => 'Shop2TopUp: منطقة اللاعب (' . ($check['region'] ?? '-') . ') لا تناسب هذه الباقة. اختر باقة مطابقة لمنطقته (EU/Global/Default).'
-                        ]);
                     }
                 }
             }
