@@ -18,42 +18,47 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if (Schema::hasTable('settings')) {
-            $settings = Cache::remember('app_settings', 60 * 60, function () {
-                return Setting::with('media')->latest()->first();
-            });
+        try {
+            if (Schema::hasTable('settings')) {
+                $settings = Cache::remember('app_settings', 60 * 60, function () {
+                    return Setting::with('media')->latest()->first();
+                });
 
-            if (! $settings) {
-                return;
+                if ($settings) {
+                    $logo = $settings->getMediaUrl('setting', $settings, null, 'media', 'logo');
+                    $favicon = $settings->getMediaUrl('setting', $settings, null, 'media', 'favicon');
+
+                    View::share([
+                        'settings' => $settings,
+                        'logo' => $logo,
+                        'favicon' => $favicon,
+                    ]);
+                }
             }
-
-            $logo = $settings->getMediaUrl('setting', $settings, null, 'media', 'logo');
-            $favicon = $settings->getMediaUrl('setting', $settings, null, 'media', 'favicon');
-
-            View::share([
-                'settings' => $settings,
-                'logo' => $logo,
-                'favicon' => $favicon,
-            ]);
+        } catch (\Throwable $e) {
+            // If DB is misconfigured/unavailable, don't crash the whole app at boot.
         }
 
         // Share cached menu categories for website views
         View::composer('website.*', function ($view) {
-            $locale = app()->getLocale();
-
-            $categories = Cache::remember("website.categories.menu.$locale", 60 * 10, function () {
-                return Category::with(['translations', 'media', 'children.translations'])
-                    ->whereNull('parent_id')
-                    ->where('status', 'active')
-                    ->get();
-            });
-
             $fx = app(ExchangeRateService::class)->sarRates();
             $ratesByCountry = [
                 'SA' => 1.0,
                 'JO' => (float) ($fx['JOD'] ?? 0.1885),
                 'US' => (float) ($fx['USD'] ?? 0.2666),
             ];
+
+            try {
+                $locale = app()->getLocale();
+                $categories = Cache::remember("website.categories.menu.$locale", 60 * 10, function () {
+                    return Category::with(['translations', 'media', 'children.translations'])
+                        ->whereNull('parent_id')
+                        ->where('status', 'active')
+                        ->get();
+                });
+            } catch (\Throwable $e) {
+                $categories = collect();
+            }
 
             $view->with([
                 'categories' => $categories,

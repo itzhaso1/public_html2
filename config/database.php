@@ -15,7 +15,8 @@ return [
     |
     */
 
-   'default' => env('DB_CONNECTION', 'sqlite'),
+   // Production-safe default: prefer MySQL unless explicitly set to sqlite.
+   'default' => env('DB_CONNECTION', 'mysql'),
 
 
     /*
