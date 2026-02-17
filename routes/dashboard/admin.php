@@ -76,6 +76,21 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
             Route::patch('product/{product}', [Dashboard\DiamondCodeController::class, 'updateProduct'])->name('product.update');
             Route::delete('product/{product}', [Dashboard\DiamondCodeController::class, 'destroyProduct'])->name('product.destroy');
         });
+
+        // Cash Exchange (استبدل رصيدك كاش)
+        Route::prefix('cash-exchange')->as('cash_exchange.')->group(function () {
+            Route::get('offers', [Dashboard\CashExchangeOfferController::class, 'index'])->name('offers.index');
+            Route::get('offers/create', [Dashboard\CashExchangeOfferController::class, 'create'])->name('offers.create');
+            Route::post('offers', [Dashboard\CashExchangeOfferController::class, 'store'])->name('offers.store');
+            Route::get('offers/{offer}/edit', [Dashboard\CashExchangeOfferController::class, 'edit'])->name('offers.edit');
+            Route::put('offers/{offer}', [Dashboard\CashExchangeOfferController::class, 'update'])->name('offers.update');
+            Route::delete('offers/{offer}', [Dashboard\CashExchangeOfferController::class, 'destroy'])->name('offers.destroy');
+
+            Route::get('requests', [Dashboard\CashExchangeRequestController::class, 'index'])->name('requests.index');
+            Route::get('requests/{cashExchangeRequest}', [Dashboard\CashExchangeRequestController::class, 'show'])->name('requests.show');
+            Route::post('requests/{cashExchangeRequest}/note', [Dashboard\CashExchangeRequestController::class, 'updateNote'])->name('requests.note');
+            Route::post('requests/{cashExchangeRequest}/complete', [Dashboard\CashExchangeRequestController::class, 'complete'])->name('requests.complete');
+        });
         
         Route::get('dashboard', Dashboard\DashboardController::class)->name('dashboard');
     });

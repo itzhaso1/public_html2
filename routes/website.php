@@ -92,6 +92,19 @@ Route::group(
             ->name('website.diamonds.check_player');
         Route::get('diamonds/manual-payment/thanks/{reference}', [Website\ManualPaymentController::class, 'thanks'])
             ->name('website.diamonds.manual_payment.thanks');
+
+        // ===============================
+        // Cash Exchange (استبدل رصيدك كاش)
+        // ===============================
+        Route::get('cash-exchange', [Website\CashExchangeController::class, 'index'])
+            ->middleware('auth')
+            ->name('website.cash_exchange.index');
+        Route::post('cash-exchange', [Website\CashExchangeController::class, 'store'])
+            ->middleware('auth')
+            ->name('website.cash_exchange.store');
+        Route::get('cash-exchange/thanks/{reference}', [Website\CashExchangeController::class, 'thanks'])
+            ->middleware('auth')
+            ->name('website.cash_exchange.thanks');
  
         // ===============================
         // Website pages

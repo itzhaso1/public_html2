@@ -77,6 +77,30 @@
         </a>
     </div>
 
+    <!-- Cash Exchange -->
+    <div data-kt-menu-trigger="click"
+         class="menu-item menu-accordion {{ is_active('admin.cash_exchange.*') }}">
+        <span class="menu-link {{ is_active('admin.cash_exchange.*') }}">
+            <span class="menu-icon"><i class="bi bi-cash-coin fs-2"></i></span>
+            <span class="menu-title">استبدل رصيدك كاش</span>
+            <span class="menu-arrow"></span>
+        </span>
+        <div class="menu-sub menu-sub-accordion menu-active-bg">
+            <div class="menu-item">
+                <a class="menu-link {{ is_active('admin.cash_exchange.offers.*') }}" href="{{ route('admin.cash_exchange.offers.index') }}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">فئات الرصيد</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a class="menu-link {{ is_active('admin.cash_exchange.requests.*') }}" href="{{ route('admin.cash_exchange.requests.index') }}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">طلبات الاستبدال</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Diamond codes -->
     <div data-kt-menu-trigger="click"
          class="menu-item menu-accordion {{ is_active('admin.diamond_codes.*') }}">

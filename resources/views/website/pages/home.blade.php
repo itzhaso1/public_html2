@@ -157,6 +157,34 @@
             </div>
         </a>
 
+        <!-- استبدل رصيدك كاش -->
+        <a href="{{ route('website.cash_exchange.index') }}"
+           class="group relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-l from-emerald-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
+            <div class="p-3 sm:p-4">
+                <div class="flex items-center justify-center">
+                    <div class="w-full h-28 sm:h-32 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-700 text-4xl font-extrabold">
+                        💵
+                    </div>
+                </div>
+
+                <div class="mt-2 text-center">
+                    <span class="inline-block text-xs text-gray-500">القسم</span>
+                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">استبدل رصيدك كاش</h3>
+                </div>
+
+                <p class="text-[11px] sm:text-sm text-gray-600 mt-2 text-center leading-relaxed">
+                    اختر فئة الرصيد وادخل كود البطاقة لاستلام كاش
+                </p>
+
+                <div class="mt-3 flex justify-center">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700">
+                        <i class="bi bi-cash-coin"></i>
+                        دخول القسم
+                    </span>
+                </div>
+            </div>
+        </a>
+
     </div>
 </div>
 
