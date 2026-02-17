@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\Admin;
 use App\Http\Controllers\Auth\Manager;
 use Illuminate\Support\Facades\Route;
+use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 Route::middleware('guest')->group(function () {
     Route::prefix('admin')->group(function () {
@@ -35,3 +36,24 @@ Route::middleware('auth:manager')->group(function () {
         Route::post('logout', [Manager\ManagerAuthenticatedSessionController::class, 'destroy'])->name('manager.logout');
     });
 });
+
+// ------------------------------------------------------------
+// Legacy (non-localized) admin URLs -> localized dashboard URLs
+// ------------------------------------------------------------
+Route::get('admin/{any?}', function (?string $any = null) {
+    $supported = array_keys((array) config('laravellocalization.supportedLocales', []));
+    $fallback = $supported[0] ?? config('app.locale', 'ar');
+
+    $locale = session('locale') ?: app()->getLocale();
+    if (! in_array($locale, $supported, true)) {
+        $locale = $fallback;
+    }
+
+    $path = trim((string) $any, '/');
+    $target = $path === '' ? 'admin/dashboard' : ('admin/' . $path);
+
+    // Build a localized URL (keeps domain/scheme)
+    $url = LaravelLocalization::getLocalizedURL($locale, $target);
+
+    return redirect()->to($url);
+})->where('any', '.*');
