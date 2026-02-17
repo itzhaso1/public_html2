@@ -26,9 +26,9 @@ class ProductController extends Controller
  
     // --- الدوال الأساسية ---
     public function index(ProductDataTable $productDataTable) { return $this->productInterface->index($this->productDataTable); }
-    public function accounts(ProductDataTable $productDataTable) { request()->merge(['group' => 'accounts']); return $this->productInterface->index($this->productDataTable); }
-    public function charge(ProductDataTable $productDataTable) { request()->merge(['group' => 'charge']); return $this->productInterface->index($this->productDataTable); }
-    public function codes(ProductDataTable $productDataTable) { request()->merge(['group' => 'codes']); return $this->productInterface->index($this->productDataTable); }
+    public function accounts(ProductDataTable $productDataTable) { return $this->productInterface->index($this->productDataTable); }
+    public function charge(ProductDataTable $productDataTable) { return $this->productInterface->index($this->productDataTable); }
+    public function codes(ProductDataTable $productDataTable) { return $this->productInterface->index($this->productDataTable); }
     public function create() { return $this->productInterface->create(); }
     public function store(Request $request) { return $this->productInterface->store($request); }
     public function edit(Product $product) { return $this->productInterface->edit($product); }

@@ -22,12 +22,15 @@ class AdminDto
         return new self(
             name: $request->name,
             email: $request->email,
-            password: $request->password,
+            // IMPORTANT: admin auth expects hashed passwords
+            password: $request->filled('password') ? bcrypt($request->password) : null,
             phone: $request->phone,
             status: $request->status,
             type: $request->type,
             link_password_status: (bool) $request->link_password_status,
-            link_password_protection: bcrypt($request->link_password_protection),
+            link_password_protection: $request->filled('link_password_protection')
+                ? bcrypt($request->link_password_protection)
+                : null,
         );
     }
 }

@@ -19,7 +19,18 @@ class ProductRepository implements ProductInterface
      * ========================= */
     public function index(ProductDataTable $productDataTable)
     {
-        $group = request()->get('group');
+        $route = request()->route();
+        $routeName = $route?->getName();
+        $group = null;
+        if ($routeName === 'admin.products.accounts') {
+            $group = 'accounts';
+        } elseif ($routeName === 'admin.products.charge') {
+            $group = 'charge';
+        } elseif ($routeName === 'admin.products.codes') {
+            $group = 'codes';
+        } else {
+            $group = request()->get('group');
+        }
         $pageTitle = trans('dashboard/admin.product.products');
 
         $countQuery = Product::query();
