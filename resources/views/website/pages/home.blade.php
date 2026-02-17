@@ -171,7 +171,9 @@
             @foreach($section->products as $product)
                 @php
                     $imageUrl = $product->getMediaUrl('product', $product, null, 'media', 'product');
-                    $productImage = $imageUrl ?: $fallbackImage;
+                    $thumb = ($product->service_type ?? null) === 'codes' ? ($product->codeThumbnail?->image_path ?? null) : null;
+                    $thumbUrl = $thumb ? Storage::disk('public')->url($thumb) : null;
+                    $productImage = $imageUrl ?: ($thumbUrl ?: $fallbackImage);
                     $isSold = $product->featured === 1;
                     $discountPercent = null;
 

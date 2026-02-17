@@ -91,6 +91,19 @@ class Product extends Model implements TranslatableContract {
         return $this->hasMany(DiamondCode::class, 'product_id');
     }
 
+    /**
+     * Thumbnail image for "codes" products taken from an available code image.
+     * This lets admins upload "code images" from dashboard and have them show on listings/home.
+     */
+    public function codeThumbnail()
+    {
+        return $this->hasOne(DiamondCode::class, 'product_id')
+            ->where('status', 'available')
+            ->whereNotNull('image_path')
+            ->where('image_path', '!=', '')
+            ->latest('id');
+    }
+
     public function manualPaymentRequests()
     {
         return $this->hasMany(ManualPaymentRequest::class, 'product_id');

@@ -49,7 +49,9 @@
                     $imageUrl = method_exists($product, 'getMediaUrl')
                         ? $product->getMediaUrl('product', $product, null, 'media', 'product')
                         : null;
-                    $productImage = $imageUrl ?: $fallbackImage;
+                    $thumb = ($product->service_type ?? null) === 'codes' ? ($product->codeThumbnail?->image_path ?? null) : null;
+                    $thumbUrl = $thumb ? Storage::disk('public')->url($thumb) : null;
+                    $productImage = $imageUrl ?: ($thumbUrl ?: $fallbackImage);
                     $title = $product->name ?? 'كود';
                     $desc = $product->description ?? $product->short_description ?? null;
                     $descText = $desc ? \Illuminate\Support\Str::limit(trim(strip_tags($desc)), 90) : 'كود جاهز للتسليم';

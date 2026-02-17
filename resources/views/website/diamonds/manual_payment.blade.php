@@ -38,36 +38,135 @@
 
             <div class="mt-5">
                 <div class="text-sm font-extrabold text-gray-900">بيانات التحويل البنكي</div>
-                <div class="mt-2 text-sm text-gray-700 space-y-2">
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-700">
                     @foreach($methodKeys as $key)
                         @php $m = $enabledMethods->get($key, []); @endphp
-                        <div class="payment-details payment-{{ $key }} {{ $selectedMethod === $key ? '' : 'hidden' }}">
-                            <div class="font-bold text-gray-900">{{ $m['title'] ?? $key }}</div>
+                        <div class="payment-card payment-{{ $key }} rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="font-extrabold text-gray-900">{{ $m['title'] ?? $key }}</div>
+                                <span class="payment-badge {{ $selectedMethod === $key ? '' : 'hidden' }} text-[11px] font-extrabold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                                    محدد
+                                </span>
+                            </div>
+
+                            <div class="mt-3 divide-y divide-gray-100">
                             @if($key === 'sa_bank')
-                                @if(!empty($m['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold select-all">{{ $m['bank_name'] }}</span></div> @endif
-                                @if(!empty($m['account_name'])) <div><span class="text-gray-500">اسم الحساب:</span> <span class="font-bold select-all">{{ $m['account_name'] }}</span></div> @endif
-                                @if(!empty($m['account_number'])) <div><span class="text-gray-500">رقم الحساب:</span> <span class="font-bold select-all">{{ $m['account_number'] }}</span></div> @endif
-                                @if(!empty($m['iban'])) <div><span class="text-gray-500">IBAN:</span> <span class="font-bold select-all">{{ $m['iban'] }}</span></div> @endif
+                                @if(!empty($m['bank_name']))
+                                    <div class="py-2 flex items-center justify-between gap-3">
+                                        <span class="text-xs text-gray-500">البنك</span>
+                                        <span class="flex items-center gap-2">
+                                            <span class="font-semibold select-all">{{ $m['bank_name'] }}</span>
+                                            <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $m['bank_name'] }}" aria-label="Copy">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                            </button>
+                                        </span>
+                                    </div>
+                                @endif
+                                @if(!empty($m['account_name']))
+                                    <div class="py-2 flex items-center justify-between gap-3">
+                                        <span class="text-xs text-gray-500">اسم الحساب</span>
+                                        <span class="flex items-center gap-2">
+                                            <span class="font-semibold select-all">{{ $m['account_name'] }}</span>
+                                            <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $m['account_name'] }}" aria-label="Copy">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                            </button>
+                                        </span>
+                                    </div>
+                                @endif
+                                @if(!empty($m['account_number']))
+                                    <div class="py-2 flex items-center justify-between gap-3">
+                                        <span class="text-xs text-gray-500">رقم الحساب</span>
+                                        <span class="flex items-center gap-2">
+                                            <span class="font-mono font-semibold text-[13px] select-all">{{ $m['account_number'] }}</span>
+                                            <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $m['account_number'] }}" aria-label="Copy">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                            </button>
+                                        </span>
+                                    </div>
+                                @endif
+                                @if(!empty($m['iban']))
+                                    <div class="py-2 flex items-center justify-between gap-3">
+                                        <span class="text-xs text-gray-500">IBAN</span>
+                                        <span class="flex items-center gap-2">
+                                            <span class="font-mono font-semibold text-[13px] select-all">{{ $m['iban'] }}</span>
+                                            <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $m['iban'] }}" aria-label="Copy">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                            </button>
+                                        </span>
+                                    </div>
+                                @endif
                             @elseif($key === 'jo_click')
-                                @if(!empty($m['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold select-all">{{ $m['bank_name'] }}</span></div> @endif
-                                @if(!empty($m['account_name'])) <div><span class="text-gray-500">الاسم:</span> <span class="font-bold select-all">{{ $m['account_name'] }}</span></div> @endif
-                                @if(!empty($m['click_id'])) <div><span class="text-gray-500">Click ID:</span> <span class="font-bold select-all">{{ $m['click_id'] }}</span></div> @endif
+                                @if(!empty($m['bank_name']))
+                                    <div class="py-2 flex items-center justify-between gap-3">
+                                        <span class="text-xs text-gray-500">البنك</span>
+                                        <span class="flex items-center gap-2">
+                                            <span class="font-semibold select-all">{{ $m['bank_name'] }}</span>
+                                            <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $m['bank_name'] }}" aria-label="Copy">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                            </button>
+                                        </span>
+                                    </div>
+                                @endif
+                                @if(!empty($m['account_name']))
+                                    <div class="py-2 flex items-center justify-between gap-3">
+                                        <span class="text-xs text-gray-500">الاسم</span>
+                                        <span class="flex items-center gap-2">
+                                            <span class="font-semibold select-all">{{ $m['account_name'] }}</span>
+                                            <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $m['account_name'] }}" aria-label="Copy">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                            </button>
+                                        </span>
+                                    </div>
+                                @endif
+                                @if(!empty($m['click_id']))
+                                    <div class="py-2 flex items-center justify-between gap-3">
+                                        <span class="text-xs text-gray-500">Click ID</span>
+                                        <span class="flex items-center gap-2">
+                                            <span class="font-mono font-semibold text-[13px] select-all">{{ $m['click_id'] }}</span>
+                                            <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $m['click_id'] }}" aria-label="Copy">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                            </button>
+                                        </span>
+                                    </div>
+                                @endif
                             @elseif($key === 'binance_trc20')
-                                <div><span class="text-gray-500">Network:</span> <span class="font-bold select-all">{{ $m['network'] ?? 'TRC20' }}</span></div>
-                                @if(!empty($m['address'])) <div><span class="text-gray-500">Address:</span> <span class="font-mono text-xs select-all">{{ $m['address'] }}</span></div> @endif
+                                <div class="py-2 flex items-center justify-between gap-3">
+                                    <span class="text-xs text-gray-500">Network</span>
+                                    <span class="flex items-center gap-2">
+                                        <span class="font-semibold select-all">{{ $m['network'] ?? 'TRC20' }}</span>
+                                        <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $m['network'] ?? 'TRC20' }}" aria-label="Copy">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                        </button>
+                                    </span>
+                                </div>
+                                @if(!empty($m['address']))
+                                    <div class="py-2 flex items-center justify-between gap-3">
+                                        <span class="text-xs text-gray-500">Address</span>
+                                        <span class="flex items-center gap-2">
+                                            <span class="font-mono font-semibold text-[13px] select-all">{{ $m['address'] }}</span>
+                                            <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $m['address'] }}" aria-label="Copy">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                            </button>
+                                        </span>
+                                    </div>
+                                @endif
                                 @if(!empty($m['link']))
-                                    <div>
-                                        <span class="text-gray-500">Link:</span>
-                                        <a class="text-blue-600 underline" href="{{ $m['link'] }}" target="_blank">فتح الرابط</a>
-                                        <span class="mx-1 text-gray-400">|</span>
-                                        <span class="text-blue-700 font-bold select-all" data-copy-text="{{ $m['link'] }}">نسخ الرابط</span>
+                                    <div class="py-2 flex items-center justify-between gap-3">
+                                        <span class="text-xs text-gray-500">Link</span>
+                                        <span class="flex items-center gap-2">
+                                            <a class="text-blue-600 underline" href="{{ $m['link'] }}" target="_blank">فتح الرابط</a>
+                                            <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $m['link'] }}" aria-label="Copy">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                            </button>
+                                        </span>
                                     </div>
                                 @endif
                             @endif
 
                             @if(!empty($m['note']))
-                                <div class="text-xs text-gray-500">{{ $m['note'] }}</div>
+                                <div class="pt-3 text-xs text-gray-500">{{ $m['note'] }}</div>
                             @endif
+                            </div>
                         </div>
                     @endforeach
                 </div>
@@ -221,9 +320,17 @@
     const radios = document.querySelectorAll('input[name="payment_method"]');
     if (!radios.length) return;
     const toggle = (key) => {
-      document.querySelectorAll('.payment-details').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.payment-card').forEach(el => {
+        el.classList.remove('ring-2', 'ring-blue-400/60', 'border-blue-200', 'bg-blue-50/30');
+        const badge = el.querySelector('.payment-badge');
+        if (badge) badge.classList.add('hidden');
+      });
       const target = document.querySelector('.payment-' + key);
-      if (target) target.classList.remove('hidden');
+      if (target) {
+        target.classList.add('ring-2', 'ring-blue-400/60', 'border-blue-200', 'bg-blue-50/30');
+        const badge = target.querySelector('.payment-badge');
+        if (badge) badge.classList.remove('hidden');
+      }
     };
     radios.forEach(r => r.addEventListener('change', () => toggle(r.value)));
     const checked = document.querySelector('input[name="payment_method"]:checked');

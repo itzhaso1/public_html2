@@ -39,6 +39,7 @@ class WebsiteController extends Controller
                 'translations',
                 'products.translations',
                 'products.media',
+                'products.codeThumbnail',
                 'categories.translations',
             ])
                 ->orderBy('order')

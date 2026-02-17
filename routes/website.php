@@ -73,7 +73,7 @@ Route::group(
                          (select count(*) from manual_payment_requests mpr where mpr.product_id = products.id and mpr.status = ?)',
                         ['available', 'pending']
                     )
-                    ->with(['media', 'translations'])
+                    ->with(['media', 'translations', 'codeThumbnail'])
                     ->get();
             });
 

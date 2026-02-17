@@ -196,7 +196,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   document.addEventListener('click', async (e) => {
-    const el = e.target && e.target.closest ? e.target.closest('.select-all') : null;
+    const el = e.target && e.target.closest
+      ? (e.target.closest('.copy-trigger') || e.target.closest('.select-all'))
+      : null;
     if (!el) return;
     const raw = (el.getAttribute('data-copy-text') || el.textContent || '').trim();
     if (!raw) return;
