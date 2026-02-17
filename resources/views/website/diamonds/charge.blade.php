@@ -17,6 +17,10 @@
 ])
 
 <section class="max-w-7xl mx-auto px-4 pb-10" dir="rtl">
+    <div class="mt-4">
+        @include('website.partials.currency_picker')
+    </div>
+
     <div class="bg-white/70 backdrop-blur rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6">
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 justify-between">
             <div class="flex items-center gap-3">
