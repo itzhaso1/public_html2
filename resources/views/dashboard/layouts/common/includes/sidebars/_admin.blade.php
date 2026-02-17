@@ -37,6 +37,12 @@
                 </a>
             </div>
             <div class="menu-item">
+                <a class="menu-link {{ is_active('admin.categories.*') }}" href="{{ route('admin.categories.index') }}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">التصنيفات (الأقسام)</span>
+                </a>
+            </div>
+            <div class="menu-item">
                 <a class="menu-link {{ is_active('admin.products.create_charge') }}" href="{{ route('admin.products.create_charge') }}">
                     <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
                     <span class="menu-title">إضافة منتج شحن</span>
