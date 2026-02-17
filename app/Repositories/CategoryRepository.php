@@ -9,6 +9,7 @@ use App\DataTables\Dashboard\Admin\CategoryDataTable;
 use Illuminate\Support\Facades\DB;
 use App\Imports\CategoryImport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Cache;
 class CategoryRepository implements CategoryInterface {
     public function index(CategoryDataTable $categoryDataTable) {
         return $categoryDataTable->render('dashboard.admin.categories.index', ['pageTitle' => 'التصنيفات']);
@@ -47,6 +48,7 @@ class CategoryRepository implements CategoryInterface {
                 $category->uploadSingleMedia('category', $request->file('category'), $category, null, 'media', true);
             }
             DB::commit();
+            $this->flushWebsiteCategoryCaches();
             return redirect()->route('admin.categories.index')->with('success', 'تم حفظ بنجاح!');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -89,6 +91,7 @@ class CategoryRepository implements CategoryInterface {
                 $category->updateSingleMedia('category', $request->file('category'), $category, null, 'media', true);
             }
             DB::commit();
+            $this->flushWebsiteCategoryCaches();
             return redirect()->route('admin.categories.index')->with('success', 'تم حفظ التعديلات بنجاح!');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -104,7 +107,26 @@ class CategoryRepository implements CategoryInterface {
         }
         $category->deleteExistingMedia('category', $category, null, 'media', true, 'category');
         $category->delete();
+        $this->flushWebsiteCategoryCaches();
         return redirect()->route('admin.categories.index')->with('success', 'تم الحذف بنجاح!');
+    }
+
+    private function flushWebsiteCategoryCaches(): void
+    {
+        $locales = array_keys(config('laravellocalization.supportedLocales', []));
+        if (empty($locales)) {
+            $locales = (array) config('translatable.locales', []);
+        }
+        if (empty($locales)) {
+            $locales = ['ar', 'en'];
+        }
+
+        foreach ($locales as $locale) {
+            Cache::forget("website.categories.menu.$locale");
+            Cache::forget("home.featured_categories.$locale");
+        }
+        Cache::forget('shop.categories');
+        Cache::forget('shop.subcategories.all');
     }
 
     public function import(Request $request) {
@@ -112,6 +134,7 @@ class CategoryRepository implements CategoryInterface {
             'file' => ['required', 'file', 'mimes:xlsx,xls']
         ]);
         Excel::import(new CategoryImport, $request->file('file'));
+        $this->flushWebsiteCategoryCaches();
         return redirect()->back()->with('success', 'تم استيراد التصنيفات بنجاح');
     }
 }
