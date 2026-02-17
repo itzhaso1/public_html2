@@ -100,12 +100,12 @@
         <!-- شحن جواهر -->
         <a href="{{ route('website.diamonds.charge') }}"
            class="group relative overflow-hidden rounded-2xl border border-yellow-200 bg-gradient-to-l from-yellow-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
-            <div class="p-3 sm:p-4">
+            <div class="p-2.5 sm:p-4">
                 <div class="flex items-center justify-center">
                     {{-- غيّر الصورة كما تريد --}}
                     <img src="{{ asset('public/uploads/oki/old.png') }}"
                          alt="شحن جواهر"
-                         class="w-full h-28 sm:h-32 object-cover rounded-xl"
+                         class="w-full h-24 sm:h-32 object-cover rounded-xl"
                          loading="lazy" decoding="async">
                 </div>
 
@@ -130,12 +130,12 @@
         <!-- أكواد جواهر -->
         <a href="{{ route('website.diamonds.codes') }}"
            class="group relative overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-l from-blue-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
-            <div class="p-3 sm:p-4">
+            <div class="p-2.5 sm:p-4">
                 <div class="flex items-center justify-center">
                     {{-- غيّر الصورة كما تريد --}}
                     <img src="{{ asset('public/uploads/oki/old.png') }}"
                          alt="أكواد جواهر"
-                         class="w-full h-28 sm:h-32 object-cover rounded-xl"
+                         class="w-full h-24 sm:h-32 object-cover rounded-xl"
                          loading="lazy" decoding="async">
                 </div>
 
@@ -160,9 +160,9 @@
         <!-- استبدل رصيدك كاش -->
         <a href="{{ route('website.cash_exchange.index') }}"
            class="group relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-l from-emerald-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
-            <div class="p-3 sm:p-4">
+            <div class="p-2.5 sm:p-4">
                 <div class="flex items-center justify-center">
-                    <div class="w-full h-28 sm:h-32 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-700 text-4xl font-extrabold">
+                    <div class="w-full h-24 sm:h-32 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-700 text-4xl font-extrabold">
                         💵
                     </div>
                 </div>
