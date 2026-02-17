@@ -46,36 +46,131 @@
             </div>
         </div>
 
-        <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-4">
+        <div class="mt-6">
             <div class="text-sm font-extrabold text-gray-900 mb-2">طريقة الدفع</div>
             @if($method)
-                <div class="text-sm text-gray-700 space-y-1">
-                    <div class="font-bold">{{ $method['title'] ?? $methodKey }}</div>
-                    @if($methodKey === 'sa_bank')
-                        @if(!empty($method['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold select-all">{{ $method['bank_name'] }}</span></div> @endif
-                        @if(!empty($method['account_name'])) <div><span class="text-gray-500">اسم الحساب:</span> <span class="font-bold select-all">{{ $method['account_name'] }}</span></div> @endif
-                        @if(!empty($method['account_number'])) <div><span class="text-gray-500">رقم الحساب:</span> <span class="font-bold select-all">{{ $method['account_number'] }}</span></div> @endif
-                        @if(!empty($method['iban'])) <div><span class="text-gray-500">IBAN:</span> <span class="font-bold select-all">{{ $method['iban'] }}</span></div> @endif
-                    @elseif($methodKey === 'jo_click')
-                        @if(!empty($method['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold select-all">{{ $method['bank_name'] }}</span></div> @endif
-                        @if(!empty($method['account_name'])) <div><span class="text-gray-500">الاسم:</span> <span class="font-bold select-all">{{ $method['account_name'] }}</span></div> @endif
-                        @if(!empty($method['click_id'])) <div><span class="text-gray-500">Click ID:</span> <span class="font-bold select-all">{{ $method['click_id'] }}</span></div> @endif
-                    @elseif($methodKey === 'binance_trc20')
-                        <div><span class="text-gray-500">Network:</span> <span class="font-bold select-all">{{ $method['network'] ?? 'TRC20' }}</span></div>
-                        @if(!empty($method['address'])) <div><span class="text-gray-500">Address:</span> <span class="font-mono text-xs select-all">{{ $method['address'] }}</span></div> @endif
-                        @if(!empty($method['link']))
-                            <div>
-                                <span class="text-gray-500">Link:</span>
-                                <a class="text-blue-600 underline" href="{{ $method['link'] }}" target="_blank">فتح الرابط</a>
-                                <span class="mx-1 text-gray-400">|</span>
-                                <span class="text-blue-700 font-bold select-all" data-copy-text="{{ $method['link'] }}">نسخ الرابط</span>
+                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
+                    <div class="text-sm font-extrabold text-gray-900">{{ $method['title'] ?? $methodKey }}</div>
+
+                    <div class="mt-3 divide-y divide-gray-100 text-sm text-gray-700">
+                        @if($methodKey === 'sa_bank')
+                            @if(!empty($method['bank_name']))
+                                <div class="py-2 flex items-center justify-between gap-3">
+                                    <span class="text-xs text-gray-500">البنك</span>
+                                    <span class="flex items-center gap-2">
+                                        <span class="font-semibold select-all">{{ $method['bank_name'] }}</span>
+                                        <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $method['bank_name'] }}" aria-label="Copy">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                        </button>
+                                    </span>
+                                </div>
+                            @endif
+                            @if(!empty($method['account_name']))
+                                <div class="py-2 flex items-center justify-between gap-3">
+                                    <span class="text-xs text-gray-500">اسم الحساب</span>
+                                    <span class="flex items-center gap-2">
+                                        <span class="font-semibold select-all">{{ $method['account_name'] }}</span>
+                                        <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $method['account_name'] }}" aria-label="Copy">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                        </button>
+                                    </span>
+                                </div>
+                            @endif
+                            @if(!empty($method['account_number']))
+                                <div class="py-2 flex items-center justify-between gap-3">
+                                    <span class="text-xs text-gray-500">رقم الحساب</span>
+                                    <span class="flex items-center gap-2">
+                                        <span class="font-mono font-semibold text-[13px] select-all">{{ $method['account_number'] }}</span>
+                                        <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $method['account_number'] }}" aria-label="Copy">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                        </button>
+                                    </span>
+                                </div>
+                            @endif
+                            @if(!empty($method['iban']))
+                                <div class="py-2 flex items-center justify-between gap-3">
+                                    <span class="text-xs text-gray-500">IBAN</span>
+                                    <span class="flex items-center gap-2">
+                                        <span class="font-mono font-semibold text-[13px] select-all">{{ $method['iban'] }}</span>
+                                        <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $method['iban'] }}" aria-label="Copy">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                        </button>
+                                    </span>
+                                </div>
+                            @endif
+                        @elseif($methodKey === 'jo_click')
+                            @if(!empty($method['bank_name']))
+                                <div class="py-2 flex items-center justify-between gap-3">
+                                    <span class="text-xs text-gray-500">البنك</span>
+                                    <span class="flex items-center gap-2">
+                                        <span class="font-semibold select-all">{{ $method['bank_name'] }}</span>
+                                        <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $method['bank_name'] }}" aria-label="Copy">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                        </button>
+                                    </span>
+                                </div>
+                            @endif
+                            @if(!empty($method['account_name']))
+                                <div class="py-2 flex items-center justify-between gap-3">
+                                    <span class="text-xs text-gray-500">الاسم</span>
+                                    <span class="flex items-center gap-2">
+                                        <span class="font-semibold select-all">{{ $method['account_name'] }}</span>
+                                        <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $method['account_name'] }}" aria-label="Copy">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                        </button>
+                                    </span>
+                                </div>
+                            @endif
+                            @if(!empty($method['click_id']))
+                                <div class="py-2 flex items-center justify-between gap-3">
+                                    <span class="text-xs text-gray-500">Click ID</span>
+                                    <span class="flex items-center gap-2">
+                                        <span class="font-mono font-semibold text-[13px] select-all">{{ $method['click_id'] }}</span>
+                                        <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $method['click_id'] }}" aria-label="Copy">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                        </button>
+                                    </span>
+                                </div>
+                            @endif
+                        @elseif($methodKey === 'binance_trc20')
+                            <div class="py-2 flex items-center justify-between gap-3">
+                                <span class="text-xs text-gray-500">Network</span>
+                                <span class="flex items-center gap-2">
+                                    <span class="font-semibold select-all">{{ $method['network'] ?? 'TRC20' }}</span>
+                                    <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $method['network'] ?? 'TRC20' }}" aria-label="Copy">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                    </button>
+                                </span>
                             </div>
+                            @if(!empty($method['address']))
+                                <div class="py-2 flex items-center justify-between gap-3">
+                                    <span class="text-xs text-gray-500">Address</span>
+                                    <span class="flex items-center gap-2">
+                                        <span class="font-mono font-semibold text-[13px] select-all">{{ $method['address'] }}</span>
+                                        <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $method['address'] }}" aria-label="Copy">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                        </button>
+                                    </span>
+                                </div>
+                            @endif
+                            @if(!empty($method['link']))
+                                <div class="py-2 flex items-center justify-between gap-3">
+                                    <span class="text-xs text-gray-500">Link</span>
+                                    <span class="flex items-center gap-2">
+                                        <a class="text-blue-600 underline" href="{{ $method['link'] }}" target="_blank">فتح الرابط</a>
+                                        <button type="button" class="copy-trigger text-blue-600 hover:text-blue-800" data-copy-text="{{ $method['link'] }}" aria-label="Copy">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                        </button>
+                                    </span>
+                                </div>
+                            @endif
                         @endif
-                    @endif
-                    <div class="pt-2 text-xs text-gray-500">بعد التحويل سيتم تنفيذ الطلب بعد التأكيد.</div>
+                    </div>
+
+                    <div class="pt-3 text-xs text-gray-500">بعد التحويل سيتم تنفيذ الطلب بعد التأكيد.</div>
                 </div>
             @else
-                <div class="text-sm text-gray-600">تم استلام الطلب. سيتم التنفيذ بعد التأكيد.</div>
+                <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600">تم استلام الطلب. سيتم التنفيذ بعد التأكيد.</div>
             @endif
         </div>
 
