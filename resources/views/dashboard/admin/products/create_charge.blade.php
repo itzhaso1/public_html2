@@ -19,7 +19,6 @@
             @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
- 
             @if($errors->any())
                 <div class="alert alert-danger">
                     <ul class="mb-0">
@@ -29,6 +28,15 @@
                     </ul>
                 </div>
             @endif
+ 
+            <div class="d-flex gap-2 mb-3">
+                <form action="{{ route('admin.products.sync_charge_offers') }}" method="POST" class="flex-grow-1">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-primary w-100 fw-bold">
+                        مزامنة عروض Shop2TopUp (سحب الباقات تلقائياً)
+                    </button>
+                </form>
+            </div>
  
             <!-- ✅ تم التصحيح: أضفنا admin. قبل اسم الرابط -->
             <form action="{{ route('admin.products.store_charge') }}" method="POST">

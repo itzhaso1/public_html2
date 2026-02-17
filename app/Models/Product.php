@@ -24,6 +24,8 @@ class Product extends Model implements TranslatableContract {
         'published_at',
         'client_number',
         'service_type',
+        // Shop2TopUp offer id (column name in DB is itemID)
+        'itemID',
 
         'erp_id'
         

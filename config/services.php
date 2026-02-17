@@ -36,5 +36,10 @@ return [
         'connection_string' => env('ERP_CONNECTION_STRING', 'user id=sa;pwd=Ts@2008@;Data Source=5.189.161.154;database=demo_website;'),
     ],
 
+    'shop2topup' => [
+        'base_url' => env('SHOP2TOPUP_BASE_URL', 'https://shop2topup.com/api/shopapi/v1'),
+        'api_key' => env('SHOP2TOPUP_API_KEY'),
+        'timeout' => env('SHOP2TOPUP_TIMEOUT', 20),
+    ],
 
 ];

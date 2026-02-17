@@ -28,6 +28,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
         // =======================================================
         Route::get('charge-items/create', [Dashboard\ProductController::class, 'createChargeProduct'])->name('products.create_charge');
         Route::post('charge-items/store', [Dashboard\ProductController::class, 'storeChargeProduct'])->name('products.store_charge');
+        Route::post('charge-items/sync-offers', [Dashboard\ProductController::class, 'syncChargeOffers'])->name('products.sync_charge_offers');
  
         // صفحات منفصلة لقوائم المنتجات (حسب النوع)
         // IMPORTANT: must be before Route::resource('products') so it doesn't match products/{product}

@@ -12,6 +12,8 @@ use App\Imports\ProductsImport;
 use App\Services\Services\ERP\ERPService;
 use Illuminate\Support\Str; // مكتبة للنصوص
 use Illuminate\Support\Facades\Cache;
+use App\Services\Integrations\Shop2TopUp\Shop2TopUpService;
+use Illuminate\Support\Facades\DB;
  
 class ProductController extends Controller
 {
@@ -133,6 +135,93 @@ class ProductController extends Controller
         } catch (\Exception $e) {
             dd($e->getMessage());
         }
+    }
+
+    /**
+     * Sync Shop2TopUp offers into gems products (service_type=gems).
+     * Stores vendor offer id in products.itemID.
+     */
+    public function syncChargeOffers(Request $request)
+    {
+        $service = new Shop2TopUpService();
+        $result = $service->getOffers();
+
+        if (! ($result['success'] ?? false)) {
+            $msg = $result['msg'] ?? 'فشل جلب العروض من المزود';
+            return redirect()->back()->withErrors(['error' => 'Shop2TopUp: ' . $msg]);
+        }
+
+        $offers = (array) ($result['offers'] ?? []);
+        if (count($offers) === 0) {
+            return redirect()->back()->withErrors(['error' => 'Shop2TopUp: لا توجد عروض في الرد']);
+        }
+
+        $categoryId = DB::table('categories')->value('id');
+        $typeId = DB::table('types')->value('id');
+        if (! $categoryId) {
+            return redirect()->back()->withErrors(['error' => 'لا يوجد تصنيف (Category) في النظام. أضف تصنيف واحد على الأقل ثم أعد المحاولة.']);
+        }
+
+        $created = 0;
+        $updated = 0;
+
+        foreach ($offers as $offer) {
+            $itemId = (int) ($offer['itemId'] ?? 0);
+            $name = trim((string) ($offer['name'] ?? ''));
+            $price = (string) ($offer['price'] ?? '');
+
+            if ($itemId <= 0 || $name === '' || $price === '') {
+                continue;
+            }
+
+            $slug = 's2tu-gems-' . $itemId;
+            $sku = 'S2TU-GEMS-' . $itemId;
+
+            /** @var \App\Models\Product|null $product */
+            $product = Product::query()
+                ->where('service_type', 'gems')
+                ->where('itemID', (string) $itemId)
+                ->first();
+
+            $payload = [
+                'slug' => $slug,
+                'type' => 'simple',
+                'category_id' => $categoryId,
+                'type_id' => $typeId ?: null,
+                'service_type' => 'gems',
+                'price' => (float) $price,
+                'stock' => 9999,
+                'sku' => $sku,
+                'status' => 'published',
+                'published_at' => now(),
+                'itemID' => (string) $itemId,
+            ];
+
+            if ($product) {
+                $product->update($payload);
+                $updated++;
+            } else {
+                $product = Product::create($payload);
+                $created++;
+            }
+
+            // Translations
+            foreach (['ar', 'en'] as $locale) {
+                DB::table('product_translations')->updateOrInsert(
+                    ['product_id' => $product->id, 'locale' => $locale],
+                    ['name' => $name, 'description' => $name]
+                );
+            }
+        }
+
+        // clear gems page cache
+        $locales = array_keys(config('laravellocalization.supportedLocales', []));
+        if (empty($locales)) $locales = ['ar', 'en'];
+        foreach ($locales as $locale) {
+            Cache::forget("diamonds.charge.$locale");
+        }
+
+        return redirect()->back()->with('success', "تمت المزامنة ✅ (جديد: $created ، تحديث: $updated)");
     }
     
 }
