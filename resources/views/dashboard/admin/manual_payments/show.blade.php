@@ -95,6 +95,7 @@
                     @endif
                     <div class="flex flex-col sm:flex-row gap-2">
                         <button type="submit"
+                                onclick="this.disabled=true; this.innerText='...جارِ الإرسال'; this.form.submit();"
                                 class="flex-1 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-green-700 transition">
                             موافقة
                         </button>

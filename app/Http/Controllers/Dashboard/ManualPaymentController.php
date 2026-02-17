@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use App\Services\Integrations\Shop2TopUp\Shop2TopUpService;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class ManualPaymentController extends Controller
 {
@@ -141,10 +142,35 @@ class ManualPaymentController extends Controller
 
             $service = new Shop2TopUpService();
 
-            // If already submitted before (e.g. previous approve failed after sending), don't resend.
-            if (!empty($manualPaymentRequest->shop2topup_trx_id)) {
+            // Reserve a trx id with a DB lock to prevent duplicate topups (double-click / concurrent requests).
+            $reservedTrxId = null;
+            $alreadyHadTrx = false;
+
+            DB::transaction(function () use ($manualPaymentRequest, &$reservedTrxId, &$alreadyHadTrx, $request) {
+                /** @var ManualPaymentRequest $mpr */
+                $mpr = ManualPaymentRequest::query()
+                    ->whereKey($manualPaymentRequest->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if (!empty($mpr->shop2topup_trx_id)) {
+                    $reservedTrxId = (string) $mpr->shop2topup_trx_id;
+                    $alreadyHadTrx = true;
+                    return;
+                }
+
+                $reservedTrxId = (string) Str::uuid();
+                $mpr->update([
+                    'shop2topup_trx_id' => $reservedTrxId,
+                    'shop2topup_status' => 'SUBMITTING',
+                    'admin_note' => $request->input('admin_note'),
+                ]);
+            });
+
+            // If already has trx, do not resend topup.
+            if ($alreadyHadTrx) {
                 try {
-                    $trx = $service->getTransaction((string) $manualPaymentRequest->shop2topup_trx_id);
+                    $trx = $service->getTransaction((string) $reservedTrxId);
                     if (($trx['success'] ?? false) === true) {
                         $manualPaymentRequest->update([
                             'shop2topup_status' => $trx['status'] ?? $manualPaymentRequest->shop2topup_status,
@@ -155,7 +181,7 @@ class ManualPaymentController extends Controller
                         ]);
                     }
                 } catch (\Throwable $e) {
-                    // ignore; continue approving
+                    // ignore
                 }
             } else {
             // Ensure the player name is checked (API requires it)
@@ -195,8 +221,7 @@ class ManualPaymentController extends Controller
                 }
             }
 
-            $trxId = (string) Str::uuid();
-            $topup = $service->topup($playerId, $offerId, $trxId);
+            $topup = $service->topup($playerId, $offerId, (string) $reservedTrxId);
 
             if (!($topup['success'] ?? false)) {
                 $msg = $topup['msg'] ?? 'TOPUP_FAILED';
@@ -206,7 +231,7 @@ class ManualPaymentController extends Controller
                 return back()->withErrors(['error' => 'Shop2TopUp: فشل الشحن: ' . $msg]);
             }
 
-            $providerTrx = $topup['trxID'] ?? $trxId;
+            $providerTrx = $topup['trxID'] ?: (string) $reservedTrxId;
 
             // Save trx details on the request for tracking via /transaction
             try {
