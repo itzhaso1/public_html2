@@ -36,6 +36,9 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
         Route::get('products/accounts', [Dashboard\ProductController::class, 'accounts'])->name('products.accounts');
         Route::get('products/charge', [Dashboard\ProductController::class, 'charge'])->name('products.charge');
         Route::get('products/codes', [Dashboard\ProductController::class, 'codes'])->name('products.codes');
+        Route::post('products/bulk-delete/{group}', [Dashboard\ProductController::class, 'bulkDeleteByGroup'])
+            ->whereIn('group', ['accounts', 'charge', 'codes'])
+            ->name('products.bulk_delete');
 
         // الروابط الأصلية للمنتجات
         Route::resource('products', Dashboard\ProductController::class);

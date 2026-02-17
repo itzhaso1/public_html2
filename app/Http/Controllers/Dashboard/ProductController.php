@@ -14,6 +14,7 @@ use Illuminate\Support\Str; // مكتبة للنصوص
 use Illuminate\Support\Facades\Cache;
 use App\Services\Integrations\Shop2TopUp\Shop2TopUpService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
  
 class ProductController extends Controller
 {
@@ -135,6 +136,79 @@ class ProductController extends Controller
         } catch (\Exception $e) {
             dd($e->getMessage());
         }
+    }
+
+    public function bulkDeleteByGroup(Request $request, string $group)
+    {
+        $group = strtolower(trim($group));
+        if (!in_array($group, ['accounts', 'charge', 'codes'], true)) {
+            abort(404);
+        }
+
+        // Safety: only delete products that are not tied to orders/carts/manual payments.
+        $query = Product::query()->with('media');
+
+        if ($group === 'accounts') {
+            $query->whereNull('service_type');
+        } elseif ($group === 'charge') {
+            $query->where('service_type', 'gems');
+        } else { // codes
+            $query->where('service_type', 'codes');
+        }
+
+        // Never delete products that have manual payment requests (would cascade delete requests).
+        $query->whereDoesntHave('manualPaymentRequests');
+
+        // Avoid deleting products currently in carts or referenced in orders (conservative).
+        // (Order items are nullOnDelete, but we keep them for safety.)
+        $query->whereNotIn('id', function ($q) {
+            $q->select('product_id')->from('carts')->whereNotNull('product_id');
+        });
+        $query->whereNotIn('id', function ($q) {
+            $q->select('product_id')->from('order_items')->whereNotNull('product_id');
+        });
+
+        if ($group === 'codes') {
+            // Avoid deleting any codes products that already delivered codes.
+            $query->whereNotIn('id', function ($q) {
+                $q->select('product_id')->from('diamond_codes')->where('status', 'delivered');
+            });
+        }
+
+        $toDeleteCount = (clone $query)->count();
+        if ($toDeleteCount === 0) {
+            return back()->with('success', 'لا يوجد منتجات يمكن حذفها ضمن هذا القسم (كلها مرتبطة بطلبات/سلة/مبيعات).');
+        }
+
+        $deleted = 0;
+
+        // Delete in chunks to keep memory low.
+        $query->orderBy('id')->chunkById(50, function ($products) use (&$deleted) {
+            foreach ($products as $product) {
+                try {
+                    // Delete media files/records (main + gallery)
+                    if (method_exists($product, 'deleteExistingMedia')) {
+                        $product->deleteExistingMedia('product', $product, null, 'media', true, 'product');
+                        $product->deleteExistingMedia('gallery', $product, null, 'media', true, 'gallery');
+                    }
+                    $product->delete();
+                    $deleted++;
+                } catch (\Throwable $e) {
+                    // Skip failures; continue.
+                    report($e);
+                }
+            }
+        });
+
+        // Clear relevant caches
+        foreach (['ar', 'en'] as $locale) {
+            Cache::forget("home.products.$locale");
+            Cache::forget("home.sections.$locale");
+            Cache::forget("diamonds.charge.$locale");
+            Cache::forget("diamonds.codes.$locale");
+        }
+
+        return back()->with('success', "تم حذف {$deleted} منتج بنجاح ✅");
     }
 
     /**

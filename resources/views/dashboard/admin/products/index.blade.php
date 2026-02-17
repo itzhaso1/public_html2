@@ -174,22 +174,33 @@ div.dt-buttons{ display:none !important; }
                 </div>
 
                 @php $group = $group ?? null; @endphp
-                @if($group === 'charge')
-                    <a href="{{ route('admin.products.create_charge') }}" class="btn btn-add-product">
-                        <i class="bi bi-gem fs-4"></i>
-                        <span>إضافة باقة شحن</span>
-                    </a>
-                @elseif($group === 'codes')
-                    <a href="{{ route('admin.diamond_codes.create') }}" class="btn btn-add-product">
-                        <i class="bi bi-plus-circle-fill fs-4"></i>
-                        <span>إضافة أكواد</span>
-                    </a>
-                @else
-                    <a href="{{ route('admin.products.create') }}" class="btn btn-add-product">
-                        <i class="bi bi-plus-circle-fill fs-4"></i>
-                        <span>إضافة منتج جديد</span>
-                    </a>
-                @endif
+                <div class="d-flex flex-wrap gap-2 w-100 w-lg-auto">
+                    @if(in_array($group, ['accounts','charge','codes']))
+                        <form method="POST" action="{{ route('admin.products.bulk_delete', $group) }}" class="w-100 w-lg-auto bulk-delete-form">
+                            @csrf
+                            <button type="submit" class="btn btn-danger w-100 w-lg-auto">
+                                حذف {{ $pageTitle ?? 'المنتجات' }} دفعة واحدة
+                            </button>
+                        </form>
+                    @endif
+
+                    @if($group === 'charge')
+                        <a href="{{ route('admin.products.create_charge') }}" class="btn btn-add-product">
+                            <i class="bi bi-gem fs-4"></i>
+                            <span>إضافة باقة شحن</span>
+                        </a>
+                    @elseif($group === 'codes')
+                        <a href="{{ route('admin.diamond_codes.create') }}" class="btn btn-add-product">
+                            <i class="bi bi-plus-circle-fill fs-4"></i>
+                            <span>إضافة أكواد</span>
+                        </a>
+                    @else
+                        <a href="{{ route('admin.products.create') }}" class="btn btn-add-product">
+                            <i class="bi bi-plus-circle-fill fs-4"></i>
+                            <span>إضافة منتج جديد</span>
+                        </a>
+                    @endif
+                </div>
             </div>
 
             <div class="card-body py-4">
@@ -245,6 +256,26 @@ div.dt-buttons{ display:none !important; }
 $(function () {
     // يمسك نفس الجدول (بدون إعادة تهيئة)
     const table = $('#products-table').DataTable();
+
+    $(document).on('submit', '.bulk-delete-form', function (e) {
+        e.preventDefault();
+        const form = this;
+
+        Swal.fire({
+            title: 'تأكيد الحذف',
+            html: 'سيتم حذف المنتجات غير المرتبطة بطلبات/سلة/مبيعات فقط.<br><b>هذا الإجراء لا يمكن التراجع عنه.</b>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'نعم، احذف',
+            cancelButtonText: 'إلغاء'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    });
 
     $(document).on('click', '.btn-delete', function (e) {
         e.preventDefault();
