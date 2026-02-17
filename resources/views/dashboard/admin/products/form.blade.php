@@ -106,6 +106,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         </select>
                     </div>
 
+                    {{-- أقسام الصفحة الرئيسية (للتجميع مثل: حسابات قوية / خصومات / ...) --}}
+                    <div class="form-group mb-3">
+                        <label>أقسام الصفحة الرئيسية</label>
+                        @php
+                            $selectedSections = old('section_ids', isset($product) ? $product->sections->pluck('id')->toArray() : []);
+                        @endphp
+                        <select name="section_ids[]" class="form-control" multiple>
+                            @foreach(($sections ?? []) as $section)
+                                <option value="{{ $section->id }}"
+                                    @selected(in_array($section->id, $selectedSections))>
+                                    {{ $section->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">تقدر تختار أكثر من قسم لنفس المنتج.</small>
+                    </div>
+
                     {{-- إبقاء النوع افتراضي كما كان (لتجنب كسر النظام) --}}
                     <input type="hidden" name="type_id" value="{{ old('type_id', $product?->type_id ?? $defaultTypeId) }}">
 

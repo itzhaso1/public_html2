@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\{Product, Category, Type, Brand, Tag};
+use App\Models\{Product, Category, Type, Brand, Tag, Section};
 use App\Services\Contracts\ProductInterface;
 use Illuminate\Http\Request;
 use App\DataTables\Dashboard\Admin\ProductDataTable;
@@ -32,12 +32,14 @@ class ProductRepository implements ProductInterface
         $defaultCategoryId = Category::query()->where('status', 'active')->value('id') ?? Category::query()->value('id');
         $defaultTypeId = Type::query()->value('id');
         $categories = Category::query()->latest()->get();
+        $sections = Section::query()->orderBy('order')->with('translations')->get();
 
         return view('dashboard.admin.products.form', [
             'pageTitle' => 'إضافة منتج',
             'defaultCategoryId' => $defaultCategoryId,
             'defaultTypeId' => $defaultTypeId,
             'categories' => $categories,
+            'sections' => $sections,
         ]);
     }
 
@@ -51,6 +53,9 @@ class ProductRepository implements ProductInterface
 
         // الوسوم
         $product->tags()->sync($request->input('tags', []));
+
+        // أقسام الصفحة الرئيسية (Sections)
+        $product->sections()->sync($request->input('section_ids', []));
 
         // الصورة الرئيسية
         if ($request->hasFile('product')) {
@@ -103,6 +108,9 @@ class ProductRepository implements ProductInterface
 
     // الوسوم
     $product->tags()->sync($request->input('tags', []));
+
+    // أقسام الصفحة الرئيسية (Sections)
+    $product->sections()->sync($request->input('section_ids', []));
 
     // تحديث الصورة الرئيسية
     if ($request->hasFile('product')) {
@@ -182,11 +190,12 @@ if ($request->hasFile('video')) {
      * ========================= */
     public function edit(Product $product)
     {
-        $product->load(['tags', 'media']);
+        $product->load(['tags', 'media', 'sections']);
 
         $defaultCategoryId = Category::query()->where('status', 'active')->value('id') ?? Category::query()->value('id');
         $defaultTypeId = Type::query()->value('id');
         $categories = Category::query()->latest()->get();
+        $sections = Section::query()->orderBy('order')->with('translations')->get();
 
         return view('dashboard.admin.products.form', [
             'pageTitle' => 'تعديل منتج',
@@ -194,6 +203,7 @@ if ($request->hasFile('video')) {
             'defaultCategoryId' => $defaultCategoryId,
             'defaultTypeId' => $defaultTypeId,
             'categories' => $categories,
+            'sections' => $sections,
         ]);
     }
 
@@ -223,6 +233,7 @@ if ($request->hasFile('video')) {
 
         foreach ($locales as $locale) {
             Cache::forget("home.products.$locale");
+            Cache::forget("home.sections.$locale");
         }
     }
 

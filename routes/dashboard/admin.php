@@ -38,6 +38,9 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
         Route::resource('categories', Dashboard\CategoryController::class);
         Route::post('categories/import', [Dashboard\CategoryController::class, 'import'])->name('categories.import');
 
+        // أقسام الصفحة الرئيسية (Sections)
+        Route::resource('sections', Dashboard\SectionController::class);
+
         Route::resource('users', Dashboard\UserController::class)->names('user');
 
         Route::prefix('manual-payments')->as('manual_payments.')->group(function () {

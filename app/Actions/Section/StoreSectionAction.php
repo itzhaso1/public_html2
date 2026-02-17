@@ -4,6 +4,7 @@ use App\Models\{Section,Product,Category};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 class StoreSectionAction {
     public function execute(Request $request): RedirectResponse {
         DB::beginTransaction();
@@ -45,10 +46,27 @@ class StoreSectionAction {
                 $section->products()->sync($products->pluck('id')->toArray());
             }
             DB::commit();
+            $this->flushHomeSectionsCache();
             return redirect()->route('admin.sections.index')->with('success', 'تم الحفظ بنجاح!');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'حدث خطأ أثناء الحفظ: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    private function flushHomeSectionsCache(): void
+    {
+        $locales = array_keys(config('laravellocalization.supportedLocales', []));
+        if (empty($locales)) {
+            $locales = (array) config('translatable.locales', []);
+        }
+        if (empty($locales)) {
+            $locales = ['ar', 'en'];
+        }
+
+        foreach ($locales as $locale) {
+            Cache::forget("home.sections.$locale");
+            Cache::forget("home.products.$locale");
         }
     }
 }
