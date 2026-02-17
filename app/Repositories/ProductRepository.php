@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\DataTables\Dashboard\Admin\ProductDataTable;
 use App\Models\Concerns\UploadVideoTrait;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 
 class ProductRepository implements ProductInterface
 {
@@ -30,11 +31,13 @@ class ProductRepository implements ProductInterface
     {
         $defaultCategoryId = Category::query()->where('status', 'active')->value('id') ?? Category::query()->value('id');
         $defaultTypeId = Type::query()->value('id');
+        $categories = Category::query()->latest()->get();
 
         return view('dashboard.admin.products.form', [
             'pageTitle' => 'إضافة منتج',
             'defaultCategoryId' => $defaultCategoryId,
             'defaultTypeId' => $defaultTypeId,
+            'categories' => $categories,
         ]);
     }
 
@@ -83,6 +86,8 @@ class ProductRepository implements ProductInterface
         if ($request->hasFile('video')) {
             $product->uploadVideo($request->file('video'));
         }
+
+        $this->flushWebsiteProductCaches();
 
         return redirect()->route('admin.products.index')
             ->with('success', 'تم إضافة المنتج بنجاح');
@@ -165,6 +170,8 @@ if ($request->hasFile('video')) {
     $product->uploadVideo($request->file('video'));
 }
 
+    $this->flushWebsiteProductCaches();
+
 
     return redirect()->route('admin.products.index')
         ->with('success', 'تم تحديث المنتج بنجاح');
@@ -179,12 +186,14 @@ if ($request->hasFile('video')) {
 
         $defaultCategoryId = Category::query()->where('status', 'active')->value('id') ?? Category::query()->value('id');
         $defaultTypeId = Type::query()->value('id');
+        $categories = Category::query()->latest()->get();
 
         return view('dashboard.admin.products.form', [
             'pageTitle' => 'تعديل منتج',
             'product'   => $product,
             'defaultCategoryId' => $defaultCategoryId,
             'defaultTypeId' => $defaultTypeId,
+            'categories' => $categories,
         ]);
     }
 
@@ -196,8 +205,25 @@ if ($request->hasFile('video')) {
         $product->deleteExistingMedia('product', $product, null, 'media', true, 'product');
         $product->delete();
 
+        $this->flushWebsiteProductCaches();
+
         return redirect()->route('admin.products.index')
             ->with('success', 'تم الحذف بنجاح!');
+    }
+
+    private function flushWebsiteProductCaches(): void
+    {
+        $locales = array_keys(config('laravellocalization.supportedLocales', []));
+        if (empty($locales)) {
+            $locales = (array) config('translatable.locales', []);
+        }
+        if (empty($locales)) {
+            $locales = ['ar', 'en'];
+        }
+
+        foreach ($locales as $locale) {
+            Cache::forget("home.products.$locale");
+        }
     }
 
     /* =========================

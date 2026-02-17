@@ -93,12 +93,21 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 
-                    {{-- قيم تلقائية بدل الأقسام/الوحدات/الوسوم (لتبسيط الداشبورد) --}}
-                    <input type="hidden" name="category_id"
-                           value="{{ old('category_id', $product?->category_id ?? $defaultCategoryId) }}">
-                    <input type="hidden" name="type_id"
-                           value="{{ old('type_id', $product?->type_id ?? $defaultTypeId) }}">
-                    {{-- tags[] تم إزالتها من الواجهة --}}
+                    {{-- الأقسام (التصنيفات) --}}
+                    <div class="form-group mb-3">
+                        <label>القسم</label>
+                        <select name="category_id" class="form-control" required>
+                            @foreach(($categories ?? []) as $category)
+                                <option value="{{ $category->id }}"
+                                    @selected(old('category_id', $product?->category_id ?? $defaultCategoryId) == $category->id)>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- إبقاء النوع افتراضي كما كان (لتجنب كسر النظام) --}}
+                    <input type="hidden" name="type_id" value="{{ old('type_id', $product?->type_id ?? $defaultTypeId) }}">
 
 
                     <div class="form-group mb-3">
