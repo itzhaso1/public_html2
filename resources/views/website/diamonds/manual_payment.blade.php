@@ -11,7 +11,12 @@
     $enabledMethods = collect($methods)->filter(fn($m) => is_array($m) && ($m['enabled'] ?? false));
     $allowedCharge = collect($allowedChargeMethodKeys ?? config('bank.charge_method_keys', []))->values()->all();
     $methodKeys = $isCodes ? $enabledMethods->keys()->all() : array_values(array_intersect($enabledMethods->keys()->all(), $allowedCharge));
-    $selectedMethod = old('payment_method') ?: ($methodKeys[0] ?? null);
+    $preferredKeys = ['sa_bank', 'jo_click', 'binance_trc20'];
+    $uiMethodKeys = array_values(array_intersect($methodKeys, $preferredKeys));
+    $selectedMethod = old('payment_method') ?: ($uiMethodKeys[0] ?? $methodKeys[0] ?? null);
+    if ($selectedMethod && !in_array($selectedMethod, $uiMethodKeys, true) && count($uiMethodKeys)) {
+        $selectedMethod = $uiMethodKeys[0];
+    }
 @endphp
 
 @include('website.diamonds.partials.header', [
@@ -38,8 +43,32 @@
 
             <div class="mt-5">
                 <div class="text-sm font-extrabold text-gray-900">بيانات التحويل البنكي</div>
+
+                @if(count($uiMethodKeys))
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        @php
+                            $methodUi = [
+                                'sa_bank' => ['emoji' => '🇸🇦', 'label' => 'تحويل بنكي سعودي'],
+                                'jo_click' => ['emoji' => '🇯🇴', 'label' => 'تحويل أردني'],
+                                'binance_trc20' => ['emoji' => '💰', 'label' => 'Binance USDT (TRC20)'],
+                            ];
+                        @endphp
+
+                        @foreach($uiMethodKeys as $key)
+                            @php $ui = $methodUi[$key] ?? ['emoji' => '💳', 'label' => $key]; @endphp
+                            <button type="button"
+                                    data-pick-payment-method="{{ $key }}"
+                                    class="payment-tab inline-flex items-center justify-center gap-2 rounded-2xl border px-3 py-2 text-sm font-extrabold transition
+                                           {{ $selectedMethod === $key ? 'border-blue-200 bg-blue-50 text-blue-800' : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-50' }}">
+                                <span class="text-base">{{ $ui['emoji'] }}</span>
+                                <span>{{ $ui['label'] }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
+
                 <div class="mt-3 space-y-3 text-sm text-gray-700">
-                    @foreach($methodKeys as $key)
+                    @foreach($uiMethodKeys as $key)
                         @php $m = $enabledMethods->get($key, []); @endphp
                         <div class="payment-card payment-{{ $key }} {{ $selectedMethod === $key ? '' : 'hidden' }} rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
                             <div class="flex items-center justify-between gap-2">
@@ -187,32 +216,8 @@
                   action="{{ route('website.diamonds.manual_payment.store', $product) }}">
                 @csrf
 
-                @if(count($methodKeys))
-                    <div>
-                        <label class="block text-sm font-bold text-gray-800 mb-2">طريقة الدفع</label>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            @foreach($methodKeys as $key)
-                                @php $m = $enabledMethods->get($key, []); @endphp
-                                @php
-                                    $methodUi = [
-                                        'sa_bank' => ['emoji' => '🇸🇦', 'label' => 'تحويل بنكي سعودي'],
-                                        'jo_click' => ['emoji' => '🇯🇴', 'label' => 'تحويل أردني'],
-                                        'binance_trc20' => ['emoji' => '💰', 'label' => 'Binance USDT (TRC20)'],
-                                    ];
-                                    $ui = $methodUi[$key] ?? null;
-                                @endphp
-                                <label class="flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 transition">
-                                    <input type="radio" name="payment_method" value="{{ $key }}"
-                                           class="accent-yellow-500"
-                                           {{ $selectedMethod === $key ? 'checked' : '' }}>
-                                    <span class="text-base">{{ $ui['emoji'] ?? '💳' }}</span>
-                                    <span class="font-extrabold">{{ $ui['label'] ?? ($m['title'] ?? $key) }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                        @error('payment_method')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
-                    </div>
-                @endif
+                <input type="hidden" name="payment_method" id="paymentMethodInput" value="{{ $selectedMethod }}">
+                @error('payment_method')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
 
                 @unless($isCodes)
                     <div>
@@ -326,8 +331,10 @@
 @endunless
 <script>
   (function () {
-    const radios = document.querySelectorAll('input[name="payment_method"]');
-    if (!radios.length) return;
+    const tabs = document.querySelectorAll('[data-pick-payment-method]');
+    const input = document.getElementById('paymentMethodInput');
+    if (!tabs.length || !input) return;
+
     const toggle = (key) => {
       document.querySelectorAll('.payment-card').forEach(el => {
         el.classList.add('hidden');
@@ -342,10 +349,27 @@
         const badge = target.querySelector('.payment-badge');
         if (badge) badge.classList.remove('hidden');
       }
+
+      tabs.forEach(t => {
+        const k = t.getAttribute('data-pick-payment-method');
+        const isActive = k === key;
+        t.classList.toggle('border-blue-200', isActive);
+        t.classList.toggle('bg-blue-50', isActive);
+        t.classList.toggle('text-blue-800', isActive);
+        t.classList.toggle('border-gray-200', !isActive);
+        t.classList.toggle('bg-white', !isActive);
+        t.classList.toggle('text-gray-800', !isActive);
+      });
     };
-    radios.forEach(r => r.addEventListener('change', () => toggle(r.value)));
-    const checked = document.querySelector('input[name="payment_method"]:checked');
-    if (checked) toggle(checked.value);
+
+    tabs.forEach(t => t.addEventListener('click', () => {
+      const key = t.getAttribute('data-pick-payment-method');
+      if (!key) return;
+      input.value = key;
+      toggle(key);
+    }));
+
+    toggle(input.value);
   })();
 </script>
 @endpush
