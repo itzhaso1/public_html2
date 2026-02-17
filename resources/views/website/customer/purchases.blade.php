@@ -108,6 +108,62 @@
         @endforelse
     </div>
 
+    @php
+        $cashRequests = $cashRequests ?? collect();
+    @endphp
+
+    @if($cashRequests->count() > 0)
+        <div class="mt-8">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-extrabold text-gray-900">استبدال رصيدك كاش</h2>
+                <a href="{{ route('website.cash_exchange.index') }}"
+                   class="text-sm font-bold text-blue-700 hover:underline">طلب جديد</a>
+            </div>
+
+            <div class="mt-3 space-y-3">
+                @foreach($cashRequests as $r)
+                    @php
+                        $statusLabel = $r->status === 'completed' ? 'مكتمل' : 'قيد المراجعة';
+                        $statusClass = $r->status === 'completed'
+                            ? 'bg-green-100 text-green-800 border-green-200'
+                            : 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                    @endphp
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <div class="text-xs text-gray-500">رقم الطلب</div>
+                                <div class="font-mono text-sm select-all">{{ $r->reference }}</div>
+                                <div class="mt-2 font-extrabold text-gray-900">
+                                    {{ $r->offer?->name ?? 'استبدال رصيد' }}
+                                </div>
+                                <div class="text-sm text-gray-600 mt-1">
+                                    الفئة: <span class="font-bold">{{ (int) $r->face_value }}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col items-start sm:items-end gap-2">
+                                <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-extrabold {{ $statusClass }}">
+                                    {{ $statusLabel }}
+                                </span>
+                                <div class="text-sm font-extrabold text-green-700">
+                                    {{ number_format((float)$r->cash_value, 2) }} {{ $r->currency }}
+                                </div>
+                                <div class="text-xs text-gray-500">{{ $r->created_at?->format('Y-m-d H:i') }}</div>
+                            </div>
+                        </div>
+
+                        @if($r->status === 'completed' && $r->completed_at)
+                            <div class="mt-3 text-xs text-gray-500">
+                                تم الإكمال بتاريخ: {{ $r->completed_at?->format('Y-m-d H:i') }}
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <div class="mt-5">
         {{ $requests->links() }}
     </div>
