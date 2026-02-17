@@ -29,15 +29,16 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
         Route::get('charge-items/create', [Dashboard\ProductController::class, 'createChargeProduct'])->name('products.create_charge');
         Route::post('charge-items/store', [Dashboard\ProductController::class, 'storeChargeProduct'])->name('products.store_charge');
  
+        // صفحات منفصلة لقوائم المنتجات (حسب النوع)
+        // IMPORTANT: must be before Route::resource('products') so it doesn't match products/{product}
+        Route::get('products/accounts', [Dashboard\ProductController::class, 'accounts'])->name('products.accounts');
+        Route::get('products/charge', [Dashboard\ProductController::class, 'charge'])->name('products.charge');
+        Route::get('products/codes', [Dashboard\ProductController::class, 'codes'])->name('products.codes');
+
         // الروابط الأصلية للمنتجات
         Route::resource('products', Dashboard\ProductController::class);
         Route::post('products/import', [Dashboard\ProductController::class, 'import'])->name('products.import');
         Route::post('products/test-erp-connection', [Dashboard\ProductController::class, 'exportProductsToERP'])->name('test-erp-connection');
- 
-        // صفحات منفصلة لقوائم المنتجات (حسب النوع)
-        Route::get('products/accounts', [Dashboard\ProductController::class, 'accounts'])->name('products.accounts');
-        Route::get('products/charge', [Dashboard\ProductController::class, 'charge'])->name('products.charge');
-        Route::get('products/codes', [Dashboard\ProductController::class, 'codes'])->name('products.codes');
 
         // التصنيفات (الأقسام)
         Route::resource('categories', Dashboard\CategoryController::class);
