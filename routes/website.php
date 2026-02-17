@@ -105,6 +105,9 @@ Route::group(
         Route::get('cash-exchange/thanks/{reference}', [Website\CashExchangeController::class, 'thanks'])
             ->middleware('auth')
             ->name('website.cash_exchange.thanks');
+        Route::get('cash-exchange/requests/{reference}', [Website\CashExchangeController::class, 'show'])
+            ->middleware('auth')
+            ->name('website.cash_exchange.show');
  
         // ===============================
         // Website pages

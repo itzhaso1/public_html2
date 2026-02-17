@@ -158,6 +158,13 @@
                                 تم الإكمال بتاريخ: {{ $r->completed_at?->format('Y-m-d H:i') }}
                             </div>
                         @endif
+
+                        <div class="mt-4">
+                            <a href="{{ route('website.cash_exchange.show', ['reference' => $r->reference]) }}"
+                               class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-extrabold text-gray-800 hover:bg-gray-50 transition">
+                                عرض التفاصيل
+                            </a>
+                        </div>
                     </div>
                 @endforeach
             </div>

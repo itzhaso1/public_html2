@@ -84,5 +84,19 @@ class CashExchangeController extends Controller
             'req' => $req,
         ]);
     }
+
+    public function show(string $reference)
+    {
+        $req = CashExchangeRequest::query()
+            ->with(['offer'])
+            ->where('reference', $reference)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        return view('website.cash_exchange.show', [
+            'pageTitle' => 'تفاصيل طلب الاستبدال',
+            'req' => $req,
+        ]);
+    }
 }
 
