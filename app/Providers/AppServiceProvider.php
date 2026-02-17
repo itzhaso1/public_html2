@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Category;
 use App\Models\Setting;
+use App\Services\Currency\ExchangeRateService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -47,7 +48,22 @@ class AppServiceProvider extends ServiceProvider
                     ->get();
             });
 
-            $view->with('categories', $categories);
+            $fx = app(ExchangeRateService::class)->sarRates();
+            $ratesByCountry = [
+                'SA' => 1.0,
+                'JO' => (float) ($fx['JOD'] ?? 0.1885),
+                'US' => (float) ($fx['USD'] ?? 0.2666),
+            ];
+
+            $view->with([
+                'categories' => $categories,
+                'currencyRatesByCountry' => $ratesByCountry,
+                'currencyRatesMeta' => [
+                    'base' => 'SAR',
+                    'date' => $fx['date'] ?? null,
+                    'source' => $fx['source'] ?? null,
+                ],
+            ]);
         });
     }
 }
