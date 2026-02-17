@@ -16,6 +16,30 @@ use Illuminate\Http\JsonResponse;
 
 class ManualPaymentController extends Controller
 {
+    private function getEnabledPaymentMethods(): array
+    {
+        $methods = (array) config('bank.methods', []);
+        $enabled = [];
+
+        foreach ($methods as $key => $m) {
+            if (!is_array($m)) continue;
+            if (!($m['enabled'] ?? false)) continue;
+
+            // Binance method needs at least address or link configured
+            if ($key === 'binance_trc20') {
+                $addr = trim((string) ($m['address'] ?? ''));
+                $link = trim((string) ($m['link'] ?? ''));
+                if ($addr === '' && $link === '') {
+                    continue;
+                }
+            }
+
+            $enabled[$key] = $m;
+        }
+
+        return $enabled;
+    }
+
     private function forgetCodesPageCache(): void
     {
         foreach (['ar', 'en'] as $locale) {
@@ -57,6 +81,8 @@ class ManualPaymentController extends Controller
         return view('website.diamonds.manual_payment', [
             'product' => $product,
             'pageTitle' => 'الدفع اليدوي',
+            'paymentMethods' => $this->getEnabledPaymentMethods(),
+            'allowedChargeMethodKeys' => (array) config('bank.charge_method_keys', []),
         ]);
     }
 
@@ -70,8 +96,16 @@ class ManualPaymentController extends Controller
             if ($redirect) return $redirect;
         }
 
+        $paymentMethods = $this->getEnabledPaymentMethods();
+        $allowedKeys = array_keys($paymentMethods);
+        $isGems = ! $isCodes;
+        if ($isGems) {
+            $allowedKeys = array_values(array_intersect($allowedKeys, (array) config('bank.charge_method_keys', [])));
+        }
+
         $rules = [
             'receipt' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'payment_method' => ['required', 'string', 'in:' . implode(',', $allowedKeys)],
         ];
 
         // For gems top-up we need the player's ID. For codes we don't.
@@ -111,6 +145,7 @@ class ManualPaymentController extends Controller
             'contact_email' => null,
             'amount' => (float) $product->price,
             'currency' => 'SAR',
+            'payment_method' => $data['payment_method'],
             'receipt_path' => $receiptPath ?? null,
             'status' => 'pending',
             'ip' => $request->ip(),

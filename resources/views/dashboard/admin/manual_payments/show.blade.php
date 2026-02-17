@@ -51,6 +51,7 @@
                 <div><span class="text-gray-500">Player ID:</span> <span class="font-bold select-all">{{ $mpr->player_id }}</span></div>
                 <div><span class="text-gray-500">المبلغ:</span> <span class="font-extrabold text-green-700">ر.س {{ number_format((float)$mpr->amount, 2) }}</span></div>
                 <div><span class="text-gray-500">الحالة:</span> <span class="font-extrabold">{{ $mpr->status }}</span></div>
+                    <div><span class="text-gray-500">طريقة الدفع:</span> <span class="font-bold">{{ $mpr->payment_method ?? '-' }}</span></div>
                 @if(($mpr->product?->service_type ?? null) === 'gems')
                     <div class="pt-2 mt-2 border-t border-gray-100">
                         <div class="font-extrabold text-gray-900 mb-1">Shop2TopUp</div>

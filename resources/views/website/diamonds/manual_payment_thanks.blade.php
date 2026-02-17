@@ -8,6 +8,9 @@
 @php
     $product = $mpr->product;
     $isCodes = ($product?->service_type ?? null) === 'codes';
+    $methods = (array) config('bank.methods', []);
+    $methodKey = $mpr->payment_method ?? null;
+    $method = $methodKey && isset($methods[$methodKey]) ? $methods[$methodKey] : null;
 @endphp
 
 @include('website.diamonds.partials.header', [
@@ -44,24 +47,29 @@
         </div>
 
         <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-4">
-            <div class="text-sm font-extrabold text-gray-900 mb-2">بيانات التحويل البنكي</div>
-            <div class="text-sm text-gray-700 space-y-1">
-                @if(config('bank.bank_name'))
-                    <div><span class="text-gray-500">البنك:</span> <span class="font-bold">{{ config('bank.bank_name') }}</span></div>
-                @endif
-                @if(config('bank.account_name'))
-                    <div><span class="text-gray-500">اسم الحساب:</span> <span class="font-bold">{{ config('bank.account_name') }}</span></div>
-                @endif
-                @if(config('bank.account_number'))
-                    <div><span class="text-gray-500">رقم الحساب:</span> <span class="font-bold select-all">{{ config('bank.account_number') }}</span></div>
-                @endif
-                @if(config('bank.iban'))
-                    <div><span class="text-gray-500">IBAN:</span> <span class="font-bold select-all">{{ config('bank.iban') }}</span></div>
-                @endif
-                <div class="pt-2 text-xs text-gray-500">
-                    بعد التحويل سيتم تنفيذ الطلب بعد التأكيد.
+            <div class="text-sm font-extrabold text-gray-900 mb-2">طريقة الدفع</div>
+            @if($method)
+                <div class="text-sm text-gray-700 space-y-1">
+                    <div class="font-bold">{{ $method['title'] ?? $methodKey }}</div>
+                    @if($methodKey === 'sa_bank')
+                        @if(!empty($method['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold">{{ $method['bank_name'] }}</span></div> @endif
+                        @if(!empty($method['account_name'])) <div><span class="text-gray-500">اسم الحساب:</span> <span class="font-bold">{{ $method['account_name'] }}</span></div> @endif
+                        @if(!empty($method['account_number'])) <div><span class="text-gray-500">رقم الحساب:</span> <span class="font-bold select-all">{{ $method['account_number'] }}</span></div> @endif
+                        @if(!empty($method['iban'])) <div><span class="text-gray-500">IBAN:</span> <span class="font-bold select-all">{{ $method['iban'] }}</span></div> @endif
+                    @elseif($methodKey === 'jo_click')
+                        @if(!empty($method['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold">{{ $method['bank_name'] }}</span></div> @endif
+                        @if(!empty($method['account_name'])) <div><span class="text-gray-500">الاسم:</span> <span class="font-bold">{{ $method['account_name'] }}</span></div> @endif
+                        @if(!empty($method['click_id'])) <div><span class="text-gray-500">Click ID:</span> <span class="font-bold select-all">{{ $method['click_id'] }}</span></div> @endif
+                    @elseif($methodKey === 'binance_trc20')
+                        <div><span class="text-gray-500">Network:</span> <span class="font-bold">{{ $method['network'] ?? 'TRC20' }}</span></div>
+                        @if(!empty($method['address'])) <div><span class="text-gray-500">Address:</span> <span class="font-mono text-xs select-all">{{ $method['address'] }}</span></div> @endif
+                        @if(!empty($method['link'])) <div><span class="text-gray-500">Link:</span> <a class="text-blue-600 underline" href="{{ $method['link'] }}" target="_blank">فتح الرابط</a></div> @endif
+                    @endif
+                    <div class="pt-2 text-xs text-gray-500">بعد التحويل سيتم تنفيذ الطلب بعد التأكيد.</div>
                 </div>
-            </div>
+            @else
+                <div class="text-sm text-gray-600">تم استلام الطلب. سيتم التنفيذ بعد التأكيد.</div>
+            @endif
         </div>
 
         <div class="mt-6 flex flex-col sm:flex-row gap-3">

@@ -18,6 +18,7 @@ class ManualPaymentRequest extends Model
         'contact_email',
         'amount',
         'currency',
+        'payment_method',
         'receipt_path',
         'status',
         'approved_at',

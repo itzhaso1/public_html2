@@ -33,6 +33,7 @@
                 <th class="p-3 font-extrabold">الباقة</th>
                 <th class="p-3 font-extrabold">Player ID</th>
                 <th class="p-3 font-extrabold">المبلغ</th>
+                <th class="p-3 font-extrabold">طريقة الدفع</th>
                 <th class="p-3 font-extrabold">الحالة</th>
                 <th class="p-3 font-extrabold">التاريخ</th>
                 <th class="p-3 font-extrabold">إجراء</th>
@@ -45,6 +46,7 @@
                     <td class="p-3 font-bold">{{ $mpr->product?->name ?? '-' }}</td>
                     <td class="p-3">{{ $mpr->player_id }}</td>
                     <td class="p-3 font-extrabold text-green-700">ر.س {{ number_format((float)$mpr->amount, 2) }}</td>
+                    <td class="p-3">{{ $mpr->payment_method ?? '-' }}</td>
                     <td class="p-3">
                         @php
                             $badge = match($mpr->status) {
@@ -71,7 +73,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td class="p-6 text-center text-gray-500" colspan="7">لا توجد طلبات.</td></tr>
+                <tr><td class="p-6 text-center text-gray-500" colspan="8">لا توجد طلبات.</td></tr>
             @endforelse
             </tbody>
         </table>

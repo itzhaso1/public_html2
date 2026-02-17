@@ -7,6 +7,11 @@
 @section('content')
 @php
     $isCodes = ($product?->service_type ?? null) === 'codes';
+    $methods = $paymentMethods ?? config('bank.methods', []);
+    $enabledMethods = collect($methods)->filter(fn($m) => is_array($m) && ($m['enabled'] ?? false));
+    $allowedCharge = collect($allowedChargeMethodKeys ?? config('bank.charge_method_keys', []))->values()->all();
+    $methodKeys = $isCodes ? $enabledMethods->keys()->all() : array_values(array_intersect($enabledMethods->keys()->all(), $allowedCharge));
+    $selectedMethod = old('payment_method') ?: ($methodKeys[0] ?? null);
 @endphp
 
 @include('website.diamonds.partials.header', [
@@ -31,21 +36,30 @@
             <div class="mt-5">
                 <div class="text-sm font-extrabold text-gray-900">بيانات التحويل البنكي</div>
                 <div class="mt-2 text-sm text-gray-700 space-y-2">
-                    @if(config('bank.bank_name'))
-                        <div><span class="text-gray-500">البنك:</span> <span class="font-bold">{{ config('bank.bank_name') }}</span></div>
-                    @endif
-                    @if(config('bank.account_name'))
-                        <div><span class="text-gray-500">اسم الحساب:</span> <span class="font-bold">{{ config('bank.account_name') }}</span></div>
-                    @endif
-                    @if(config('bank.account_number'))
-                        <div><span class="text-gray-500">رقم الحساب:</span> <span class="font-bold select-all">{{ config('bank.account_number') }}</span></div>
-                    @endif
-                    @if(config('bank.iban'))
-                        <div><span class="text-gray-500">IBAN:</span> <span class="font-bold select-all">{{ config('bank.iban') }}</span></div>
-                    @endif
-                    @if(config('bank.note'))
-                        <div class="text-xs text-gray-500">{{ config('bank.note') }}</div>
-                    @endif
+                    @foreach($methodKeys as $key)
+                        @php $m = $enabledMethods->get($key, []); @endphp
+                        <div class="payment-details payment-{{ $key }} {{ $selectedMethod === $key ? '' : 'hidden' }}">
+                            <div class="font-bold text-gray-900">{{ $m['title'] ?? $key }}</div>
+                            @if($key === 'sa_bank')
+                                @if(!empty($m['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold">{{ $m['bank_name'] }}</span></div> @endif
+                                @if(!empty($m['account_name'])) <div><span class="text-gray-500">اسم الحساب:</span> <span class="font-bold">{{ $m['account_name'] }}</span></div> @endif
+                                @if(!empty($m['account_number'])) <div><span class="text-gray-500">رقم الحساب:</span> <span class="font-bold select-all">{{ $m['account_number'] }}</span></div> @endif
+                                @if(!empty($m['iban'])) <div><span class="text-gray-500">IBAN:</span> <span class="font-bold select-all">{{ $m['iban'] }}</span></div> @endif
+                            @elseif($key === 'jo_click')
+                                @if(!empty($m['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold">{{ $m['bank_name'] }}</span></div> @endif
+                                @if(!empty($m['account_name'])) <div><span class="text-gray-500">الاسم:</span> <span class="font-bold">{{ $m['account_name'] }}</span></div> @endif
+                                @if(!empty($m['click_id'])) <div><span class="text-gray-500">Click ID:</span> <span class="font-bold select-all">{{ $m['click_id'] }}</span></div> @endif
+                            @elseif($key === 'binance_trc20')
+                                <div><span class="text-gray-500">Network:</span> <span class="font-bold">{{ $m['network'] ?? 'TRC20' }}</span></div>
+                                @if(!empty($m['address'])) <div><span class="text-gray-500">Address:</span> <span class="font-mono text-xs select-all">{{ $m['address'] }}</span></div> @endif
+                                @if(!empty($m['link'])) <div><span class="text-gray-500">Link:</span> <a class="text-blue-600 underline" href="{{ $m['link'] }}" target="_blank">فتح الرابط</a></div> @endif
+                            @endif
+
+                            @if(!empty($m['note']))
+                                <div class="text-xs text-gray-500">{{ $m['note'] }}</div>
+                            @endif
+                        </div>
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -63,6 +77,24 @@
             <form class="mt-4 space-y-4" method="POST" enctype="multipart/form-data"
                   action="{{ route('website.diamonds.manual_payment.store', $product) }}">
                 @csrf
+
+                @if(count($methodKeys))
+                    <div>
+                        <label class="block text-sm font-bold text-gray-800 mb-2">طريقة الدفع</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            @foreach($methodKeys as $key)
+                                @php $m = $enabledMethods->get($key, []); @endphp
+                                <label class="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm cursor-pointer">
+                                    <input type="radio" name="payment_method" value="{{ $key }}"
+                                           class="accent-yellow-500"
+                                           {{ $selectedMethod === $key ? 'checked' : '' }}>
+                                    <span class="font-bold">{{ $m['title'] ?? $key }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('payment_method')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                    </div>
+                @endif
 
                 @unless($isCodes)
                     <div>
@@ -174,5 +206,19 @@
   })();
 </script>
 @endunless
+<script>
+  (function () {
+    const radios = document.querySelectorAll('input[name="payment_method"]');
+    if (!radios.length) return;
+    const toggle = (key) => {
+      document.querySelectorAll('.payment-details').forEach(el => el.classList.add('hidden'));
+      const target = document.querySelector('.payment-' + key);
+      if (target) target.classList.remove('hidden');
+    };
+    radios.forEach(r => r.addEventListener('change', () => toggle(r.value)));
+    const checked = document.querySelector('input[name="payment_method"]:checked');
+    if (checked) toggle(checked.value);
+  })();
+</script>
 @endpush
 
