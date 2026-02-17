@@ -36,6 +36,12 @@
                         مزامنة عروض Shop2TopUp (سحب الباقات تلقائياً)
                     </button>
                 </form>
+                <form action="{{ route('admin.products.charge_balance') }}" method="POST" style="min-width: 160px;">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-success w-100 fw-bold">
+                        عرض الرصيد
+                    </button>
+                </form>
             </div>
  
             <!-- ✅ تم التصحيح: أضفنا admin. قبل اسم الرابط -->

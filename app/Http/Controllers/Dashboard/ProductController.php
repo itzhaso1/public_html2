@@ -223,5 +223,23 @@ class ProductController extends Controller
 
         return redirect()->back()->with('success', "تمت المزامنة ✅ (جديد: $created ، تحديث: $updated)");
     }
+
+    public function chargeWalletBalance()
+    {
+        $service = new Shop2TopUpService();
+        $result = $service->getBalance();
+
+        if (! ($result['success'] ?? false)) {
+            $msg = $result['msg'] ?? 'فشل جلب الرصيد';
+            return redirect()->back()->withErrors(['error' => 'Shop2TopUp: ' . $msg]);
+        }
+
+        $balance = $result['balance'] ?? null;
+        if ($balance === null || $balance === '') {
+            return redirect()->back()->withErrors(['error' => 'Shop2TopUp: لم يتم إرجاع الرصيد']);
+        }
+
+        return redirect()->back()->with('success', 'رصيد المحفظة: $' . $balance);
+    }
     
 }

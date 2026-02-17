@@ -63,5 +63,45 @@ class Shop2TopUpService
             'msg' => (string) ($data['msg'] ?? ''),
         ];
     }
+
+    /**
+     * @return array{success:bool, balance?:string, msg?:string}
+     */
+    public function getBalance(): array
+    {
+        $key = $this->apiKey();
+        if ($key === '') {
+            return ['success' => false, 'msg' => 'SHOP2TOPUP_API_KEY غير مضبوط'];
+        }
+
+        $timeout = (int) config('services.shop2topup.timeout', 20);
+
+        $response = Http::timeout($timeout)
+            ->acceptJson()
+            ->withHeaders([
+                'Authorization' => 'Bearer ' . $key,
+            ])
+            ->get($this->baseUrl() . '/balance');
+
+        if (! $response->successful()) {
+            $json = $response->json();
+            $msg = is_array($json) ? ($json['msg'] ?? null) : null;
+            return [
+                'success' => false,
+                'msg' => $msg ?: ('HTTP ' . $response->status()),
+            ];
+        }
+
+        $data = $response->json();
+        if (! is_array($data)) {
+            return ['success' => false, 'msg' => 'رد غير صالح من المزود'];
+        }
+
+        return [
+            'success' => (bool) ($data['success'] ?? false),
+            'balance' => isset($data['balance']) ? (string) $data['balance'] : null,
+            'msg' => (string) ($data['msg'] ?? ''),
+        ];
+    }
 }
 
