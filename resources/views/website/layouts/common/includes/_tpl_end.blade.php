@@ -3,16 +3,42 @@
 const mobileMenu = document.getElementById('mobile-menu');
 menuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
 </script>
+
+<!-- Country / Currency picker modal (first visit) -->
+<div id="countryPickerModal" class="hidden fixed inset-0 z-[9999] bg-black/60">
+  <div class="min-h-full flex items-center justify-center p-4" dir="rtl">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-5">
+      <div class="text-center">
+        <div class="text-3xl">🌍</div>
+        <h3 class="mt-2 text-xl font-extrabold text-gray-900">اختر بلدك</h3>
+        <p class="mt-1 text-sm text-gray-600">سيتم حفظ الاختيار لتعديل الأسعار تلقائياً.</p>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button type="button" data-pick-country="SA" class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-bold hover:bg-gray-50">السعودية</button>
+        <button type="button" data-pick-country="JO" class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-bold hover:bg-gray-50">الأردن</button>
+        <button type="button" data-pick-country="US" class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-bold hover:bg-gray-50">دولار</button>
+      </div>
+
+      <div class="mt-4 text-[11px] text-gray-500">
+        يمكنك تغيير العملة لاحقاً من صفحة الدفع.
+      </div>
+    </div>
+  </div>
+</div>
 <!-- سكربت العملات -->
   <!-- سكربت العملات -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const buttons = document.querySelectorAll(".currency-btn");
+  const CACHE_KEY = "user_country_code";
+  const CACHE_TTL = 6 * 60 * 60 * 1000;
 
   buttons.forEach(btn => {
     btn.addEventListener("click", () => {
       const symbol = btn.dataset.symbol;
       const rate = parseFloat(btn.dataset.rate);
+      const country = btn.dataset.country || "";
 
       document.querySelectorAll(".product-price").forEach(p => {
         const current = p.querySelector(".current-price");
@@ -34,8 +60,46 @@ document.addEventListener("DOMContentLoaded", () => {
       // إبراز الزر النشط
       buttons.forEach(b => b.classList.remove("ring-2", "ring-yellow-500"));
       btn.classList.add("ring-2", "ring-yellow-500");
+
+      if (country) {
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ code: country, ts: Date.now() }));
+        } catch (e) {}
+      }
     });
   });
+
+  const applyCurrency = (countryCode) => {
+    const btn = document.querySelector(`.currency-btn[data-country="${countryCode}"]`)
+      || document.querySelector(`.currency-btn[data-country="SA"]`)
+      || buttons[0];
+    if (btn) btn.click();
+  };
+
+  const readCachedCountry = () => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      if (cached && cached.code && (Date.now() - cached.ts) < CACHE_TTL) return cached.code;
+    } catch (e) {}
+    return null;
+  };
+
+  // First-visit modal (choose country once)
+  const modal = document.getElementById('countryPickerModal');
+  const cachedCode = readCachedCountry();
+  if (!cachedCode && modal) {
+    modal.classList.remove('hidden');
+    modal.querySelectorAll('[data-pick-country]').forEach(el => {
+      el.addEventListener('click', () => {
+        const code = el.getAttribute('data-pick-country');
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ code, ts: Date.now() })); } catch (e) {}
+        modal.classList.add('hidden');
+        if (buttons.length) applyCurrency(code);
+      });
+    });
+  } else if (cachedCode && buttons.length) {
+    applyCurrency(cachedCode);
+  }
 });
 </script>
 

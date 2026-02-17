@@ -21,6 +21,9 @@
 ])
 
 <section class="max-w-4xl mx-auto px-4 pb-12" dir="rtl">
+    <div class="mt-4">
+        @include('website.partials.currency_picker')
+    </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
             <h2 class="text-xl font-extrabold text-gray-900">تفاصيل الباقة</h2>
