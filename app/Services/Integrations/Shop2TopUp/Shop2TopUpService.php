@@ -103,5 +103,48 @@ class Shop2TopUpService
             'msg' => (string) ($data['msg'] ?? ''),
         ];
     }
+
+    /**
+     * @return array{success:bool, status?:string, player_id?:string, player_name?:string, time?:string, delivery_at?:string, offer?:string, secure_id?:string, order_id?:string, msg?:string}
+     */
+    public function getTransaction(string $trxId): array
+    {
+        $trxId = trim($trxId);
+        if ($trxId === '') {
+            return ['success' => false, 'msg' => 'TRXID_MISSING'];
+        }
+
+        $key = $this->apiKey();
+        if ($key === '') {
+            return ['success' => false, 'msg' => 'SHOP2TOPUP_API_KEY غير مضبوط'];
+        }
+
+        $timeout = (int) config('services.shop2topup.timeout', 20);
+
+        $response = Http::timeout($timeout)
+            ->acceptJson()
+            ->withHeaders([
+                'Authorization' => 'Bearer ' . $key,
+            ])
+            ->post($this->baseUrl() . '/transaction', [
+                'trx_id' => $trxId,
+            ]);
+
+        if (! $response->successful()) {
+            $json = $response->json();
+            $msg = is_array($json) ? ($json['msg'] ?? null) : null;
+            return [
+                'success' => false,
+                'msg' => $msg ?: ('HTTP ' . $response->status()),
+            ];
+        }
+
+        $data = $response->json();
+        if (! is_array($data)) {
+            return ['success' => false, 'msg' => 'رد غير صالح من المزود'];
+        }
+
+        return array_merge(['success' => (bool) ($data['success'] ?? false)], $data);
+    }
 }
 

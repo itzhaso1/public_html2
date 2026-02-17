@@ -8,6 +8,7 @@ use App\Models\ManualPaymentRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use App\Services\Integrations\Shop2TopUp\Shop2TopUpService;
 
 class ManualPaymentController extends Controller
 {
@@ -46,6 +47,34 @@ class ManualPaymentController extends Controller
         abort_if(! Storage::disk('public')->exists($manualPaymentRequest->receipt_path), 404);
 
         return Storage::disk('public')->response($manualPaymentRequest->receipt_path);
+    }
+
+    public function checkTransaction(Request $request, ManualPaymentRequest $manualPaymentRequest)
+    {
+        $request->validate([
+            'trx_id' => ['required', 'string', 'max:100'],
+        ]);
+
+        $trxId = (string) $request->input('trx_id');
+
+        $service = new Shop2TopUpService();
+        $res = $service->getTransaction($trxId);
+
+        if (! ($res['success'] ?? false)) {
+            $msg = $res['msg'] ?? 'فشل التحقق من العملية';
+            return back()->withErrors(['error' => 'Shop2TopUp: ' . $msg]);
+        }
+
+        $manualPaymentRequest->update([
+            'shop2topup_trx_id' => $trxId,
+            'shop2topup_status' => $res['status'] ?? null,
+            'shop2topup_order_id' => $res['order_id'] ?? null,
+            'shop2topup_secure_id' => $res['secure_id'] ?? null,
+            'shop2topup_delivery_at' => !empty($res['delivery_at']) ? $res['delivery_at'] : null,
+            'shop2topup_response' => $res,
+        ]);
+
+        return back()->with('success', 'تم تحديث حالة العملية من Shop2TopUp ✅');
     }
 
     public function approve(Request $request, ManualPaymentRequest $manualPaymentRequest)

@@ -40,6 +40,15 @@
                 <div><span class="text-gray-500">Player ID:</span> <span class="font-bold select-all">{{ $mpr->player_id }}</span></div>
                 <div><span class="text-gray-500">المبلغ:</span> <span class="font-extrabold text-green-700">ر.س {{ number_format((float)$mpr->amount, 2) }}</span></div>
                 <div><span class="text-gray-500">الحالة:</span> <span class="font-extrabold">{{ $mpr->status }}</span></div>
+                @if(($mpr->product?->service_type ?? null) === 'gems')
+                    <div class="pt-2 mt-2 border-t border-gray-100">
+                        <div class="font-extrabold text-gray-900 mb-1">Shop2TopUp</div>
+                        <div><span class="text-gray-500">TRX ID:</span> <span class="font-mono text-xs select-all">{{ $mpr->shop2topup_trx_id ?? '-' }}</span></div>
+                        <div><span class="text-gray-500">Status:</span> <span class="font-extrabold">{{ $mpr->shop2topup_status ?? '-' }}</span></div>
+                        <div><span class="text-gray-500">Order ID:</span> <span class="font-mono text-xs select-all">{{ $mpr->shop2topup_order_id ?? '-' }}</span></div>
+                        <div><span class="text-gray-500">Delivered at:</span> <span class="font-mono text-xs">{{ $mpr->shop2topup_delivery_at?->format('Y-m-d H:i:s') ?? '-' }}</span></div>
+                    </div>
+                @endif
                 @if($mpr->contact_phone)
                     <div><span class="text-gray-500">الهاتف:</span> <span class="font-bold select-all">{{ $mpr->contact_phone }}</span></div>
                 @endif
@@ -57,6 +66,22 @@
                     <textarea name="admin_note" rows="3"
                               class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                               placeholder="مثال: تم التأكد من الإيصال وسيتم الشحن الآن...">{{ old('admin_note', $mpr->admin_note) }}</textarea>
+                    @if(($mpr->product?->service_type ?? null) === 'gems')
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">TRX ID (من Shop2TopUp) - اختياري</label>
+                            <div class="flex gap-2">
+                                <input type="text" name="trx_id"
+                                       value="{{ old('trx_id', $mpr->shop2topup_trx_id) }}"
+                                       class="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm font-mono"
+                                       placeholder="efd37fee-3fc9-429c-8042-850707612306">
+                                <button formaction="{{ route('admin.manual_payments.transaction', $mpr) }}"
+                                        class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-extrabold hover:bg-gray-50 transition">
+                                    تحديث الحالة
+                                </button>
+                            </div>
+                            <div class="text-[11px] text-gray-500 mt-1">زر "تحديث الحالة" يسحب حالة العملية من Shop2TopUp عبر `/transaction`.</div>
+                        </div>
+                    @endif
                     <div class="flex flex-col sm:flex-row gap-2">
                         <button type="submit"
                                 class="flex-1 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-green-700 transition">

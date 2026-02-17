@@ -55,6 +55,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
             Route::get('/', [Dashboard\ManualPaymentController::class, 'index'])->name('index');
             Route::get('{manualPaymentRequest}', [Dashboard\ManualPaymentController::class, 'show'])->name('show');
             Route::get('{manualPaymentRequest}/receipt', [Dashboard\ManualPaymentController::class, 'receipt'])->name('receipt');
+            Route::post('{manualPaymentRequest}/transaction', [Dashboard\ManualPaymentController::class, 'checkTransaction'])->name('transaction');
             Route::post('{manualPaymentRequest}/approve', [Dashboard\ManualPaymentController::class, 'approve'])->name('approve');
             Route::post('{manualPaymentRequest}/reject', [Dashboard\ManualPaymentController::class, 'reject'])->name('reject');
         });
