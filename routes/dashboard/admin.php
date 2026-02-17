@@ -29,6 +29,8 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
         Route::get('charge-items/create', [Dashboard\ProductController::class, 'createChargeProduct'])->name('products.create_charge');
         Route::post('charge-items/store', [Dashboard\ProductController::class, 'storeChargeProduct'])->name('products.store_charge');
         Route::post('charge-items/sync-offers', [Dashboard\ProductController::class, 'syncChargeOffers'])->name('products.sync_charge_offers');
+        Route::post('charge-items/sync-offers-global', [Dashboard\ProductController::class, 'syncChargeOffersGlobal'])->name('products.sync_charge_offers_global');
+        Route::post('charge-items/delete-non-global', [Dashboard\ProductController::class, 'deleteNonGlobalChargeOffers'])->name('products.delete_non_global_charge_offers');
         Route::post('charge-items/balance', [Dashboard\ProductController::class, 'chargeWalletBalance'])->name('products.charge_balance');
  
         // صفحات منفصلة لقوائم المنتجات (حسب النوع)

@@ -36,10 +36,26 @@
                         مزامنة عروض Shop2TopUp (سحب الباقات تلقائياً)
                     </button>
                 </form>
+                <form action="{{ route('admin.products.sync_charge_offers_global') }}" method="POST" class="flex-grow-1">
+                    @csrf
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">
+                        مزامنة باقات Global فقط
+                    </button>
+                </form>
                 <form action="{{ route('admin.products.charge_balance') }}" method="POST" style="min-width: 160px;">
                     @csrf
                     <button type="submit" class="btn btn-outline-success w-100 fw-bold">
                         عرض الرصيد
+                    </button>
+                </form>
+            </div>
+
+            <div class="d-flex gap-2 mb-3">
+                <form action="{{ route('admin.products.delete_non_global_charge_offers') }}" method="POST" class="flex-grow-1"
+                      onsubmit="return confirm('سيتم حذف باقات الشحن غير Global (غير المرتبطة بطلبات/سلة/مبيعات). هل أنت متأكد؟');">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-danger w-100 fw-bold">
+                        حذف باقات الشحن غير Global
                     </button>
                 </form>
             </div>

@@ -230,6 +230,17 @@ class ProductController extends Controller
             return redirect()->back()->withErrors(['error' => 'Shop2TopUp: لا توجد عروض في الرد']);
         }
 
+        // Filter: Global offers only (name contains "Global")
+        if ($request->boolean('only_global')) {
+            $offers = array_values(array_filter($offers, function ($offer) {
+                $name = (string) ($offer['name'] ?? '');
+                return stripos($name, 'global') !== false;
+            }));
+            if (count($offers) === 0) {
+                return redirect()->back()->withErrors(['error' => 'Shop2TopUp: لا توجد عروض Global في الرد']);
+            }
+        }
+
         $categoryId = DB::table('categories')->value('id');
         $typeId = DB::table('types')->value('id');
         if (! $categoryId) {
@@ -296,6 +307,58 @@ class ProductController extends Controller
         }
 
         return redirect()->back()->with('success', "تمت المزامنة ✅ (جديد: $created ، تحديث: $updated)");
+    }
+
+    public function syncChargeOffersGlobal(Request $request)
+    {
+        $request->merge(['only_global' => true]);
+        return $this->syncChargeOffers($request);
+    }
+
+    public function deleteNonGlobalChargeOffers()
+    {
+        // Delete only synced gems offers (itemID set) that are NOT Global and safe to delete.
+        $query = Product::query()
+            ->where('service_type', 'gems')
+            ->whereNotNull('itemID')
+            ->where('itemID', '!=', '')
+            ->whereDoesntHave('manualPaymentRequests')
+            ->whereNotIn('id', function ($q) {
+                $q->select('product_id')->from('carts')->whereNotNull('product_id');
+            })
+            ->whereNotIn('id', function ($q) {
+                $q->select('product_id')->from('order_items')->whereNotNull('product_id');
+            })
+            ->whereHas('translations', function ($q) {
+                $q->where('name', 'not like', '%Global%');
+            });
+
+        $count = (clone $query)->count();
+        if ($count === 0) {
+            return back()->with('success', 'لا يوجد باقات شحن غير Global قابلة للحذف.');
+        }
+
+        $deleted = 0;
+        $query->orderBy('id')->chunkById(50, function ($products) use (&$deleted) {
+            foreach ($products as $product) {
+                try {
+                    if (method_exists($product, 'deleteExistingMedia')) {
+                        $product->deleteExistingMedia('product', $product, null, 'media', true, 'product');
+                        $product->deleteExistingMedia('gallery', $product, null, 'media', true, 'gallery');
+                    }
+                    $product->delete();
+                    $deleted++;
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+        });
+
+        foreach (['ar', 'en'] as $locale) {
+            Cache::forget("diamonds.charge.$locale");
+        }
+
+        return back()->with('success', "تم حذف {$deleted} باقة غير Global ✅");
     }
 
     public function chargeWalletBalance()
