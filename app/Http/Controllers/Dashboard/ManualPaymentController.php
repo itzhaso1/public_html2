@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use App\Services\Integrations\Shop2TopUp\Shop2TopUpService;
+use Illuminate\Support\Str;
 
 class ManualPaymentController extends Controller
 {
@@ -84,6 +85,67 @@ class ManualPaymentController extends Controller
         ]);
 
         $manualPaymentRequest->load(['product']);
+
+        // If this request is for a "gems" product, perform Shop2TopUp topup before approving.
+        if (($manualPaymentRequest->product?->service_type ?? null) === 'gems') {
+            $product = $manualPaymentRequest->product;
+            $playerId = trim((string) $manualPaymentRequest->player_id);
+            $offerId = (int) ($product?->itemID ?? 0);
+
+            if ($playerId === '' || mb_strlen($playerId) < 3) {
+                return back()->withErrors(['error' => 'Player ID غير صحيح.']);
+            }
+            if ($offerId <= 0) {
+                return back()->withErrors(['error' => 'هذا المنتج غير مربوط بعرض Shop2TopUp (itemId). قم بالمزامنة أو ضبط itemId أولاً.']);
+            }
+
+            $service = new Shop2TopUpService();
+
+            // Ensure the player name is checked (API requires it)
+            $check = $service->checkPlayer($playerId);
+            if (!($check['success'] ?? false)) {
+                $msg = $check['msg'] ?? 'NOT_READY';
+                return back()->withErrors(['error' => 'Shop2TopUp: لا يمكن التحقق من اللاعب الآن: ' . $msg . '. حاول بعد دقيقة.']);
+            }
+
+            $trxId = (string) Str::uuid();
+            $topup = $service->topup($playerId, $offerId, $trxId);
+
+            if (!($topup['success'] ?? false)) {
+                $msg = $topup['msg'] ?? 'TOPUP_FAILED';
+                return back()->withErrors(['error' => 'Shop2TopUp: فشل الشحن: ' . $msg]);
+            }
+
+            $providerTrx = $topup['trxID'] ?? $trxId;
+
+            // Save trx details on the request for tracking via /transaction
+            $manualPaymentRequest->update([
+                'shop2topup_trx_id' => $providerTrx,
+                'shop2topup_status' => 'SUBMITTED',
+                'shop2topup_response' => $topup,
+            ]);
+
+            // Try to fetch transaction status immediately (best-effort)
+            try {
+                $trx = $service->getTransaction($providerTrx);
+                if (($trx['success'] ?? false) === true) {
+                    $manualPaymentRequest->update([
+                        'shop2topup_status' => $trx['status'] ?? $manualPaymentRequest->shop2topup_status,
+                        'shop2topup_order_id' => $trx['order_id'] ?? $manualPaymentRequest->shop2topup_order_id,
+                        'shop2topup_secure_id' => $trx['secure_id'] ?? $manualPaymentRequest->shop2topup_secure_id,
+                        'shop2topup_delivery_at' => !empty($trx['delivery_at']) ? $trx['delivery_at'] : $manualPaymentRequest->shop2topup_delivery_at,
+                        'shop2topup_response' => $trx,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
+
+            // Clear gems page cache (optional)
+            foreach (['ar', 'en'] as $locale) {
+                Cache::forget("diamonds.charge.$locale");
+            }
+        }
 
         // If this request is for a "codes" product, allocate and deliver a code.
         if (($manualPaymentRequest->product?->service_type ?? null) === 'codes') {

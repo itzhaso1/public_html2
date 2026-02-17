@@ -278,5 +278,65 @@ class Shop2TopUpService
             'msg' => isset($data['msg']) ? (string) $data['msg'] : 'NOT_READY',
         ];
     }
+
+    /**
+     * Create a topup request.
+     *
+     * @return array{success:bool, trxID?:string, msg?:string}
+     */
+    public function topup(string $playerId, int $offerId, string $trxId): array
+    {
+        $playerId = trim($playerId);
+        $trxId = trim($trxId);
+
+        if ($playerId === '' || mb_strlen($playerId) < 3) {
+            return ['success' => false, 'msg' => 'WRONG_ID'];
+        }
+        if ($offerId <= 0) {
+            return ['success' => false, 'msg' => 'OFFER_MISSING'];
+        }
+        if ($trxId === '') {
+            return ['success' => false, 'msg' => 'MISS_TRX'];
+        }
+
+        $key = $this->apiKey();
+        if ($key === '') {
+            return ['success' => false, 'msg' => 'SHOP2TOPUP_API_KEY غير مضبوط'];
+        }
+
+        $timeout = (int) config('services.shop2topup.timeout', 20);
+
+        $response = Http::timeout($timeout)
+            ->acceptJson()
+            ->withHeaders([
+                'Authorization' => 'Bearer ' . $key,
+            ])
+            ->post($this->baseUrl() . '/topup', [
+                'playerID' => $playerId,
+                'offer' => $offerId,
+                'trx_id' => $trxId,
+            ]);
+
+        // They may return 403 DUPLICATE_TASK; treat as failure with msg.
+        if (! $response->successful()) {
+            $json = $response->json();
+            $msg = is_array($json) ? ($json['msg'] ?? null) : null;
+            return [
+                'success' => false,
+                'msg' => $msg ?: ('HTTP ' . $response->status()),
+            ];
+        }
+
+        $data = $response->json();
+        if (! is_array($data)) {
+            return ['success' => false, 'msg' => 'رد غير صالح من المزود'];
+        }
+
+        return [
+            'success' => (bool) ($data['success'] ?? false),
+            'trxID' => isset($data['trxID']) ? (string) $data['trxID'] : null,
+            'msg' => isset($data['msg']) ? (string) $data['msg'] : null,
+        ];
+    }
 }
 
