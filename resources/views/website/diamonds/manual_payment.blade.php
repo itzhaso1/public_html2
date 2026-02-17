@@ -159,8 +159,11 @@
           const cached = data.cached ? ' (cached)' : '';
           setMsg(`✅ الاسم: <b>${name}</b> — Region: <b>${region}</b>${cached}`, 'text-green-700');
         } else {
-          const msg = data.msg ? String(data.msg) : 'فشل التحقق';
-          setMsg(`❌ ${msg}`, 'text-red-600');
+          const raw = data.msg ? String(data.msg) : 'فشل التحقق';
+          const friendly = (raw === 'NOT_READY' || raw === 'DUPLICATE_TASK')
+            ? 'الطلب قيد المعالجة، انتظر قليلًا ثم أعد المحاولة.'
+            : raw;
+          setMsg(`❌ ${friendly}`, 'text-red-600');
         }
       } catch (e) {
         setMsg('فشل الاتصال. حاول لاحقاً.', 'text-red-600');
