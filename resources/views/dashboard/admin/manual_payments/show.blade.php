@@ -31,6 +31,17 @@
         </div>
     @endif
 
+    @if($errors->any())
+        <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <div class="font-extrabold mb-1">حدث خطأ</div>
+            <ul class="list-disc ps-5 space-y-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
             <h2 class="font-extrabold text-gray-900">معلومات الطلب</h2>
