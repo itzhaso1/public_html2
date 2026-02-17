@@ -31,12 +31,6 @@
                 </a>
             </div>
             <div class="menu-item">
-                <a class="menu-link {{ is_active('admin.products.create') }}" href="{{ route('admin.products.create') }}">
-                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
-                    <span class="menu-title">إضافة منتج</span>
-                </a>
-            </div>
-            <div class="menu-item">
                 <a class="menu-link {{ is_active('admin.products.charge') }}" href="{{ route('admin.products.charge') }}">
                     <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
                     <span class="menu-title">باقات الشحن</span>
@@ -49,6 +43,14 @@
                 </a>
             </div>
         </div>
+    </div>
+
+    <!-- Add product (separate item, not inside products) -->
+    <div class="menu-item">
+        <a class="menu-link {{ is_active('admin.products.create') }}" href="{{ route('admin.products.create') }}">
+            <span class="menu-icon"><i class="bi bi-plus-square fs-2"></i></span>
+            <span class="menu-title">إضافة منتج</span>
+        </a>
     </div>
 
     <!-- Sections (homepage groupings) -->
