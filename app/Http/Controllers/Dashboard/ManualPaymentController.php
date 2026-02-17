@@ -11,9 +11,19 @@ use Illuminate\Support\Facades\Storage;
 use App\Services\Integrations\Shop2TopUp\Shop2TopUpService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\ChargeCompletedNotification;
 
 class ManualPaymentController extends Controller
 {
+    private function isDeliveredStatus(?string $status): bool
+    {
+        $s = strtoupper(trim((string) $status));
+        if ($s === '') {
+            return false;
+        }
+        return str_contains($s, 'DELIVER') || str_contains($s, 'SUCCESS') || str_contains($s, 'COMPLET');
+    }
+
     private function normalizeShop2TopUpOfferGroupFromName(?string $name): string
     {
         $name = (string) $name;
@@ -97,6 +107,9 @@ class ManualPaymentController extends Controller
             'trx_id' => ['required', 'string', 'max:100'],
         ]);
 
+        $manualPaymentRequest->loadMissing(['user', 'product']);
+        $oldStatus = $manualPaymentRequest->shop2topup_status;
+
         $trxId = (string) $request->input('trx_id');
 
         $service = new Shop2TopUpService();
@@ -115,6 +128,17 @@ class ManualPaymentController extends Controller
             'shop2topup_delivery_at' => !empty($res['delivery_at']) ? $res['delivery_at'] : null,
             'shop2topup_response' => $res,
         ]);
+
+        $manualPaymentRequest->refresh();
+        $newStatus = $manualPaymentRequest->shop2topup_status;
+        if (! $this->isDeliveredStatus($oldStatus) && $this->isDeliveredStatus($newStatus) && $manualPaymentRequest->user) {
+            // Send customer notification on completion (best-effort)
+            try {
+                $manualPaymentRequest->user->notify(new ChargeCompletedNotification($manualPaymentRequest));
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
 
         return back()->with('success', 'تم تحديث حالة العملية من Shop2TopUp ✅');
     }
@@ -251,6 +275,7 @@ class ManualPaymentController extends Controller
             try {
                 $trx = $service->getTransaction($providerTrx);
                 if (($trx['success'] ?? false) === true) {
+                    $oldStatus = $manualPaymentRequest->shop2topup_status;
                     $manualPaymentRequest->update([
                         'shop2topup_status' => $trx['status'] ?? $manualPaymentRequest->shop2topup_status,
                         'shop2topup_order_id' => $trx['order_id'] ?? $manualPaymentRequest->shop2topup_order_id,
@@ -258,6 +283,17 @@ class ManualPaymentController extends Controller
                         'shop2topup_delivery_at' => !empty($trx['delivery_at']) ? $trx['delivery_at'] : $manualPaymentRequest->shop2topup_delivery_at,
                         'shop2topup_response' => $trx,
                     ]);
+
+                    $manualPaymentRequest->loadMissing(['user', 'product']);
+                    $manualPaymentRequest->refresh();
+                    $newStatus = $manualPaymentRequest->shop2topup_status;
+                    if (! $this->isDeliveredStatus($oldStatus) && $this->isDeliveredStatus($newStatus) && $manualPaymentRequest->user) {
+                        try {
+                            $manualPaymentRequest->user->notify(new ChargeCompletedNotification($manualPaymentRequest));
+                        } catch (\Throwable $e) {
+                            // ignore
+                        }
+                    }
                 }
             } catch (\Throwable $e) {
                 // ignore

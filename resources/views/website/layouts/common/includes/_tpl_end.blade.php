@@ -4,7 +4,7 @@ const mobileMenu = document.getElementById('mobile-menu');
 menuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
 </script>
 
-<!-- Country / Currency picker modal (first visit) -->
+<!-- Country / Currency picker modal -->
 <div id="countryPickerModal" class="hidden fixed inset-0 z-[9999] bg-black/60">
   <div class="min-h-full flex items-center justify-center p-4" dir="rtl">
     <div class="w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-5">
@@ -21,7 +21,7 @@ menuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden
       </div>
 
       <div class="mt-4 text-[11px] text-gray-500">
-        يمكنك تغيير العملة لاحقاً من صفحة الدفع.
+        يمكنك تغيير البلد/العملة لاحقاً من صفحة الدفع أو الملف الشخصي.
       </div>
     </div>
   </div>
@@ -33,6 +33,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const buttons = document.querySelectorAll(".currency-btn");
   const CACHE_KEY = "user_country_code";
   const CACHE_TTL = 6 * 60 * 60 * 1000;
+
+  const normalizeCountryToCurrencyCountry = (code) => {
+    const c = String(code || '').toUpperCase().trim();
+    if (c === 'SA') return 'SA';
+    if (c === 'JO') return 'JO';
+    return 'US'; // default for all other countries
+  };
+
+  const writeCachedCountry = (countryCode) => {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ code: countryCode, ts: Date.now() }));
+    } catch (e) {}
+  };
 
   buttons.forEach(btn => {
     btn.addEventListener("click", () => {
@@ -62,9 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.classList.add("ring-2", "ring-yellow-500");
 
       if (country) {
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({ code: country, ts: Date.now() }));
-        } catch (e) {}
+        writeCachedCountry(country);
       }
     });
   });
@@ -84,21 +95,59 @@ document.addEventListener("DOMContentLoaded", () => {
     return null;
   };
 
-  // First-visit modal (choose country once)
+  // Modal open/close helpers (manual)
   const modal = document.getElementById('countryPickerModal');
-  const cachedCode = readCachedCountry();
-  if (!cachedCode && modal) {
-    modal.classList.remove('hidden');
+  const openModal = () => { if (modal) modal.classList.remove('hidden'); };
+  const closeModal = () => { if (modal) modal.classList.add('hidden'); };
+
+  // Allow pages to open the modal explicitly
+  document.querySelectorAll('[data-open-country-picker]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      openModal();
+    });
+  });
+
+  // Pick buttons inside modal
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
     modal.querySelectorAll('[data-pick-country]').forEach(el => {
       el.addEventListener('click', () => {
-        const code = el.getAttribute('data-pick-country');
-        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ code, ts: Date.now() })); } catch (e) {}
-        modal.classList.add('hidden');
+        const code = normalizeCountryToCurrencyCountry(el.getAttribute('data-pick-country'));
+        writeCachedCountry(code);
+        closeModal();
         if (buttons.length) applyCurrency(code);
       });
     });
-  } else if (cachedCode && buttons.length) {
-    applyCurrency(cachedCode);
+  }
+
+  // Auto-detect if no cached selection:
+  // SA => SAR, JO => JOD, otherwise USD.
+  const cachedCode = readCachedCountry();
+  if (buttons.length) {
+    if (cachedCode) {
+      applyCurrency(normalizeCountryToCurrencyCountry(cachedCode));
+    } else {
+      const controller = ('AbortController' in window) ? new AbortController() : null;
+      const timer = setTimeout(() => { try { controller && controller.abort(); } catch (e) {} }, 1800);
+
+      fetch("https://ipwho.is/?fields=country_code", controller ? { signal: controller.signal } : undefined)
+        .then(r => r.json())
+        .then(data => {
+          const detected = normalizeCountryToCurrencyCountry(data && data.country_code);
+          writeCachedCountry(detected);
+          applyCurrency(detected);
+        })
+        .catch(() => {
+          const fallback = 'US';
+          writeCachedCountry(fallback);
+          applyCurrency(fallback);
+        })
+        .finally(() => clearTimeout(timer));
+    }
   }
 });
 </script>
