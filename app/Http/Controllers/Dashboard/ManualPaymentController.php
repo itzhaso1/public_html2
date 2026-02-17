@@ -141,6 +141,23 @@ class ManualPaymentController extends Controller
 
             $service = new Shop2TopUpService();
 
+            // If already submitted before (e.g. previous approve failed after sending), don't resend.
+            if (!empty($manualPaymentRequest->shop2topup_trx_id)) {
+                try {
+                    $trx = $service->getTransaction((string) $manualPaymentRequest->shop2topup_trx_id);
+                    if (($trx['success'] ?? false) === true) {
+                        $manualPaymentRequest->update([
+                            'shop2topup_status' => $trx['status'] ?? $manualPaymentRequest->shop2topup_status,
+                            'shop2topup_order_id' => $trx['order_id'] ?? $manualPaymentRequest->shop2topup_order_id,
+                            'shop2topup_secure_id' => $trx['secure_id'] ?? $manualPaymentRequest->shop2topup_secure_id,
+                            'shop2topup_delivery_at' => !empty($trx['delivery_at']) ? $trx['delivery_at'] : $manualPaymentRequest->shop2topup_delivery_at,
+                            'shop2topup_response' => $trx,
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    // ignore; continue approving
+                }
+            } else {
             // Ensure the player name is checked (API requires it)
             $check = $service->checkPlayer($playerId);
             if (!($check['success'] ?? false)) {
@@ -192,11 +209,18 @@ class ManualPaymentController extends Controller
             $providerTrx = $topup['trxID'] ?? $trxId;
 
             // Save trx details on the request for tracking via /transaction
-            $manualPaymentRequest->update([
-                'shop2topup_trx_id' => $providerTrx,
-                'shop2topup_status' => 'SUBMITTED',
-                'shop2topup_response' => $topup,
-            ]);
+            try {
+                $manualPaymentRequest->update([
+                    'shop2topup_trx_id' => $providerTrx,
+                    'shop2topup_status' => 'SUBMITTED',
+                    'shop2topup_response' => $topup,
+                ]);
+            } catch (\Throwable $e) {
+                report($e);
+                return back()->withErrors([
+                    'error' => 'تم إرسال الشحن للمزود ✅ لكن تعذر حفظ بيانات العملية محلياً. نفّذ: php artisan migrate --force ثم أعد المحاولة (لن نعيد الإرسال).'
+                ]);
+            }
 
             // Try to fetch transaction status immediately (best-effort)
             try {
@@ -218,6 +242,7 @@ class ManualPaymentController extends Controller
             foreach (['ar', 'en'] as $locale) {
                 Cache::forget("diamonds.charge.$locale");
             }
+            } // end resend guard else
         }
 
         // If this request is for a "codes" product, allocate and deliver a code.

@@ -332,9 +332,18 @@ class Shop2TopUpService
             return ['success' => false, 'msg' => 'رد غير صالح من المزود'];
         }
 
+        $trx = null;
+        if (array_key_exists('trxID', $data)) {
+            $trx = $data['trxID'];
+        } elseif (array_key_exists('trxId', $data)) {
+            $trx = $data['trxId'];
+        } elseif (array_key_exists('trx_id', $data)) {
+            $trx = $data['trx_id'];
+        }
+
         return [
             'success' => (bool) ($data['success'] ?? false),
-            'trxID' => isset($data['trxID']) ? (string) $data['trxID'] : null,
+            'trxID' => isset($trx) ? (string) $trx : null,
             'msg' => isset($data['msg']) ? (string) $data['msg'] : null,
         ];
     }
