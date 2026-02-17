@@ -52,18 +52,25 @@
                 <div class="text-sm text-gray-700 space-y-1">
                     <div class="font-bold">{{ $method['title'] ?? $methodKey }}</div>
                     @if($methodKey === 'sa_bank')
-                        @if(!empty($method['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold">{{ $method['bank_name'] }}</span></div> @endif
-                        @if(!empty($method['account_name'])) <div><span class="text-gray-500">اسم الحساب:</span> <span class="font-bold">{{ $method['account_name'] }}</span></div> @endif
+                        @if(!empty($method['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold select-all">{{ $method['bank_name'] }}</span></div> @endif
+                        @if(!empty($method['account_name'])) <div><span class="text-gray-500">اسم الحساب:</span> <span class="font-bold select-all">{{ $method['account_name'] }}</span></div> @endif
                         @if(!empty($method['account_number'])) <div><span class="text-gray-500">رقم الحساب:</span> <span class="font-bold select-all">{{ $method['account_number'] }}</span></div> @endif
                         @if(!empty($method['iban'])) <div><span class="text-gray-500">IBAN:</span> <span class="font-bold select-all">{{ $method['iban'] }}</span></div> @endif
                     @elseif($methodKey === 'jo_click')
-                        @if(!empty($method['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold">{{ $method['bank_name'] }}</span></div> @endif
-                        @if(!empty($method['account_name'])) <div><span class="text-gray-500">الاسم:</span> <span class="font-bold">{{ $method['account_name'] }}</span></div> @endif
+                        @if(!empty($method['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold select-all">{{ $method['bank_name'] }}</span></div> @endif
+                        @if(!empty($method['account_name'])) <div><span class="text-gray-500">الاسم:</span> <span class="font-bold select-all">{{ $method['account_name'] }}</span></div> @endif
                         @if(!empty($method['click_id'])) <div><span class="text-gray-500">Click ID:</span> <span class="font-bold select-all">{{ $method['click_id'] }}</span></div> @endif
                     @elseif($methodKey === 'binance_trc20')
-                        <div><span class="text-gray-500">Network:</span> <span class="font-bold">{{ $method['network'] ?? 'TRC20' }}</span></div>
+                        <div><span class="text-gray-500">Network:</span> <span class="font-bold select-all">{{ $method['network'] ?? 'TRC20' }}</span></div>
                         @if(!empty($method['address'])) <div><span class="text-gray-500">Address:</span> <span class="font-mono text-xs select-all">{{ $method['address'] }}</span></div> @endif
-                        @if(!empty($method['link'])) <div><span class="text-gray-500">Link:</span> <a class="text-blue-600 underline" href="{{ $method['link'] }}" target="_blank">فتح الرابط</a></div> @endif
+                        @if(!empty($method['link']))
+                            <div>
+                                <span class="text-gray-500">Link:</span>
+                                <a class="text-blue-600 underline" href="{{ $method['link'] }}" target="_blank">فتح الرابط</a>
+                                <span class="mx-1 text-gray-400">|</span>
+                                <span class="text-blue-700 font-bold select-all" data-copy-text="{{ $method['link'] }}">نسخ الرابط</span>
+                            </div>
+                        @endif
                     @endif
                     <div class="pt-2 text-xs text-gray-500">بعد التحويل سيتم تنفيذ الطلب بعد التأكيد.</div>
                 </div>

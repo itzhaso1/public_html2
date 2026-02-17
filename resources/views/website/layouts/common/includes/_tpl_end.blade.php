@@ -103,6 +103,69 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+<!-- Copy to clipboard for payment info -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const toastId = 'copyToast';
+  const showToast = (msg) => {
+    let t = document.getElementById(toastId);
+    if (!t) {
+      t = document.createElement('div');
+      t.id = toastId;
+      t.style.position = 'fixed';
+      t.style.left = '50%';
+      t.style.bottom = '24px';
+      t.style.transform = 'translateX(-50%)';
+      t.style.zIndex = '99999';
+      t.style.padding = '10px 14px';
+      t.style.borderRadius = '12px';
+      t.style.background = 'rgba(0,0,0,0.85)';
+      t.style.color = '#fff';
+      t.style.fontSize = '13px';
+      t.style.fontWeight = '700';
+      t.style.boxShadow = '0 10px 25px rgba(0,0,0,0.25)';
+      t.style.opacity = '0';
+      t.style.transition = 'opacity 160ms ease-in-out';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg || 'تم النسخ';
+    t.style.opacity = '1';
+    clearTimeout(window.__copyToastTimer);
+    window.__copyToastTimer = setTimeout(() => { t.style.opacity = '0'; }, 900);
+  };
+
+  const fallbackCopy = (text) => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  };
+
+  document.addEventListener('click', async (e) => {
+    const el = e.target && e.target.closest ? e.target.closest('.select-all') : null;
+    if (!el) return;
+    const raw = (el.getAttribute('data-copy-text') || el.textContent || '').trim();
+    if (!raw) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(raw);
+      } else {
+        fallbackCopy(raw);
+      }
+      showToast('تم نسخ النص');
+    } catch (err) {
+      fallbackCopy(raw);
+      showToast('تم النسخ');
+    }
+  });
+});
+</script>
+
     <!-- سكربت الشارات -->
     <script>
         document.querySelectorAll('.product').forEach(p => {

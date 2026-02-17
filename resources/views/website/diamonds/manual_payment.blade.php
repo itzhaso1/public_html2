@@ -44,18 +44,25 @@
                         <div class="payment-details payment-{{ $key }} {{ $selectedMethod === $key ? '' : 'hidden' }}">
                             <div class="font-bold text-gray-900">{{ $m['title'] ?? $key }}</div>
                             @if($key === 'sa_bank')
-                                @if(!empty($m['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold">{{ $m['bank_name'] }}</span></div> @endif
-                                @if(!empty($m['account_name'])) <div><span class="text-gray-500">اسم الحساب:</span> <span class="font-bold">{{ $m['account_name'] }}</span></div> @endif
+                                @if(!empty($m['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold select-all">{{ $m['bank_name'] }}</span></div> @endif
+                                @if(!empty($m['account_name'])) <div><span class="text-gray-500">اسم الحساب:</span> <span class="font-bold select-all">{{ $m['account_name'] }}</span></div> @endif
                                 @if(!empty($m['account_number'])) <div><span class="text-gray-500">رقم الحساب:</span> <span class="font-bold select-all">{{ $m['account_number'] }}</span></div> @endif
                                 @if(!empty($m['iban'])) <div><span class="text-gray-500">IBAN:</span> <span class="font-bold select-all">{{ $m['iban'] }}</span></div> @endif
                             @elseif($key === 'jo_click')
-                                @if(!empty($m['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold">{{ $m['bank_name'] }}</span></div> @endif
-                                @if(!empty($m['account_name'])) <div><span class="text-gray-500">الاسم:</span> <span class="font-bold">{{ $m['account_name'] }}</span></div> @endif
+                                @if(!empty($m['bank_name'])) <div><span class="text-gray-500">البنك:</span> <span class="font-bold select-all">{{ $m['bank_name'] }}</span></div> @endif
+                                @if(!empty($m['account_name'])) <div><span class="text-gray-500">الاسم:</span> <span class="font-bold select-all">{{ $m['account_name'] }}</span></div> @endif
                                 @if(!empty($m['click_id'])) <div><span class="text-gray-500">Click ID:</span> <span class="font-bold select-all">{{ $m['click_id'] }}</span></div> @endif
                             @elseif($key === 'binance_trc20')
-                                <div><span class="text-gray-500">Network:</span> <span class="font-bold">{{ $m['network'] ?? 'TRC20' }}</span></div>
+                                <div><span class="text-gray-500">Network:</span> <span class="font-bold select-all">{{ $m['network'] ?? 'TRC20' }}</span></div>
                                 @if(!empty($m['address'])) <div><span class="text-gray-500">Address:</span> <span class="font-mono text-xs select-all">{{ $m['address'] }}</span></div> @endif
-                                @if(!empty($m['link'])) <div><span class="text-gray-500">Link:</span> <a class="text-blue-600 underline" href="{{ $m['link'] }}" target="_blank">فتح الرابط</a></div> @endif
+                                @if(!empty($m['link']))
+                                    <div>
+                                        <span class="text-gray-500">Link:</span>
+                                        <a class="text-blue-600 underline" href="{{ $m['link'] }}" target="_blank">فتح الرابط</a>
+                                        <span class="mx-1 text-gray-400">|</span>
+                                        <span class="text-blue-700 font-bold select-all" data-copy-text="{{ $m['link'] }}">نسخ الرابط</span>
+                                    </div>
+                                @endif
                             @endif
 
                             @if(!empty($m['note']))
