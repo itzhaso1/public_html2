@@ -38,13 +38,13 @@
 
             <div class="mt-5">
                 <div class="text-sm font-extrabold text-gray-900">بيانات التحويل البنكي</div>
-                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-700">
+                <div class="mt-3 space-y-3 text-sm text-gray-700">
                     @foreach($methodKeys as $key)
                         @php $m = $enabledMethods->get($key, []); @endphp
-                        <div class="payment-card payment-{{ $key }} rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
+                        <div class="payment-card payment-{{ $key }} {{ $selectedMethod === $key ? '' : 'hidden' }} rounded-2xl border border-gray-200 bg-white shadow-sm p-4">
                             <div class="flex items-center justify-between gap-2">
                                 <div class="font-extrabold text-gray-900">{{ $m['title'] ?? $key }}</div>
-                                <span class="payment-badge {{ $selectedMethod === $key ? '' : 'hidden' }} text-[11px] font-extrabold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                                <span class="payment-badge text-[11px] font-extrabold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
                                     محدد
                                 </span>
                             </div>
@@ -193,11 +193,20 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             @foreach($methodKeys as $key)
                                 @php $m = $enabledMethods->get($key, []); @endphp
-                                <label class="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm cursor-pointer">
+                                @php
+                                    $methodUi = [
+                                        'sa_bank' => ['emoji' => '🇸🇦', 'label' => 'تحويل بنكي سعودي'],
+                                        'jo_click' => ['emoji' => '🇯🇴', 'label' => 'تحويل أردني'],
+                                        'binance_trc20' => ['emoji' => '💰', 'label' => 'Binance USDT (TRC20)'],
+                                    ];
+                                    $ui = $methodUi[$key] ?? null;
+                                @endphp
+                                <label class="flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 transition">
                                     <input type="radio" name="payment_method" value="{{ $key }}"
                                            class="accent-yellow-500"
                                            {{ $selectedMethod === $key ? 'checked' : '' }}>
-                                    <span class="font-bold">{{ $m['title'] ?? $key }}</span>
+                                    <span class="text-base">{{ $ui['emoji'] ?? '💳' }}</span>
+                                    <span class="font-extrabold">{{ $ui['label'] ?? ($m['title'] ?? $key) }}</span>
                                 </label>
                             @endforeach
                         </div>
@@ -321,12 +330,14 @@
     if (!radios.length) return;
     const toggle = (key) => {
       document.querySelectorAll('.payment-card').forEach(el => {
+        el.classList.add('hidden');
         el.classList.remove('ring-2', 'ring-blue-400/60', 'border-blue-200', 'bg-blue-50/30');
         const badge = el.querySelector('.payment-badge');
         if (badge) badge.classList.add('hidden');
       });
       const target = document.querySelector('.payment-' + key);
       if (target) {
+        target.classList.remove('hidden');
         target.classList.add('ring-2', 'ring-blue-400/60', 'border-blue-200', 'bg-blue-50/30');
         const badge = target.querySelector('.payment-badge');
         if (badge) badge.classList.remove('hidden');
