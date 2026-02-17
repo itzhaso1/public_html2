@@ -25,15 +25,27 @@
         </span>
         <div class="menu-sub menu-sub-accordion menu-active-bg">
             <div class="menu-item">
-                <a class="menu-link {{ is_active('admin.products.index') }}" href="{{ route('admin.products.index') }}">
+                <a class="menu-link {{ is_active('admin.products.accounts') }}" href="{{ route('admin.products.accounts') }}">
                     <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
-                    <span class="menu-title">قائمة المنتجات</span>
+                    <span class="menu-title">الحسابات</span>
                 </a>
             </div>
             <div class="menu-item">
                 <a class="menu-link {{ is_active('admin.products.create') }}" href="{{ route('admin.products.create') }}">
                     <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
                     <span class="menu-title">إضافة منتج</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a class="menu-link {{ is_active('admin.products.charge') }}" href="{{ route('admin.products.charge') }}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">باقات الشحن</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a class="menu-link {{ is_active('admin.products.codes') }}" href="{{ route('admin.products.codes') }}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">منتجات الأكواد</span>
                 </a>
             </div>
         </div>

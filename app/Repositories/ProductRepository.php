@@ -19,8 +19,25 @@ class ProductRepository implements ProductInterface
      * ========================= */
     public function index(ProductDataTable $productDataTable)
     {
+        $group = request()->get('group');
+        $pageTitle = trans('dashboard/admin.product.products');
+
+        $countQuery = Product::query();
+        if ($group === 'accounts') {
+            $pageTitle = 'قائمة الحسابات';
+            $countQuery->whereNull('service_type');
+        } elseif ($group === 'charge') {
+            $pageTitle = 'قائمة باقات الشحن';
+            $countQuery->where('service_type', 'gems');
+        } elseif ($group === 'codes') {
+            $pageTitle = 'قائمة منتجات الأكواد';
+            $countQuery->where('service_type', 'codes');
+        }
+
         return $productDataTable->render('dashboard.admin.products.index', [
-            'pageTitle' => trans('dashboard/admin.product.products'),
+            'pageTitle' => $pageTitle,
+            'group' => $group,
+            'productsCount' => $countQuery->count(),
         ]);
     }
 

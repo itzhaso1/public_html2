@@ -48,8 +48,21 @@ class ProductDataTable extends BaseDataTable {
  
     public function query(): QueryBuilder
     {
-        return Product::with(['media','category', 'brand', 'tags'])
-            ->latest();
+        $query = Product::with(['media','category', 'brand', 'tags'])->latest();
+
+        $group = request()->get('group');
+        if ($group === 'accounts') {
+            // المنتجات العادية (حسابات): ليست شحن وليست أكواد
+            $query->whereNull('service_type');
+        } elseif ($group === 'charge') {
+            // باقات الشحن (جواهر)
+            $query->where('service_type', 'gems');
+        } elseif ($group === 'codes') {
+            // منتجات الأكواد
+            $query->where('service_type', 'codes');
+        }
+
+        return $query;
     }
  
     public function getColumns(): array

@@ -34,6 +34,11 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
         Route::post('products/import', [Dashboard\ProductController::class, 'import'])->name('products.import');
         Route::post('products/test-erp-connection', [Dashboard\ProductController::class, 'exportProductsToERP'])->name('test-erp-connection');
  
+        // صفحات منفصلة لقوائم المنتجات (حسب النوع)
+        Route::get('products/accounts', [Dashboard\ProductController::class, 'accounts'])->name('products.accounts');
+        Route::get('products/charge', [Dashboard\ProductController::class, 'charge'])->name('products.charge');
+        Route::get('products/codes', [Dashboard\ProductController::class, 'codes'])->name('products.codes');
+
         // التصنيفات (الأقسام)
         Route::resource('categories', Dashboard\CategoryController::class);
         Route::post('categories/import', [Dashboard\CategoryController::class, 'import'])->name('categories.import');
