@@ -88,7 +88,10 @@
     </div>
 </div>
 
-<!-- اختيار العملة تم نقله لبوابة الدفع (الشحن/الأكواد) + مودال أول دخول -->
+<!-- اختيار العملة -->
+<div class="mt-2">
+    @include('website.partials.currency_picker')
+</div>
 
 <!-- أقسام سريعة -->
 <div class="px-4 mt-4">

@@ -18,5 +18,19 @@
         <img src="https://upload.wikimedia.org/wikipedia/en/a/a4/Flag_of_the_United_States.svg"
              class="w-7 h-7 rounded-full" alt="علم أمريكا" loading="lazy" decoding="async" width="28" height="28">
     </button>
+
+    <!-- الريال العماني -->
+    <button class="currency-btn bg-white hover:bg-yellow-100 p-1.5 rounded-full shadow transition-all duration-200 border border-gray-200 hover:scale-105"
+            data-symbol="ر.ع" data-rate="0.1" data-country="OM" title="الريال العماني">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/d/dd/Flag_of_Oman.svg"
+             class="w-7 h-7 rounded-full" alt="علم عُمان" loading="lazy" decoding="async" width="28" height="28">
+    </button>
+
+    <!-- الجنيه المصري -->
+    <button class="currency-btn bg-white hover:bg-yellow-100 p-1.5 rounded-full shadow transition-all duration-200 border border-gray-200 hover:scale-105"
+            data-symbol="ج.م" data-rate="13.0" data-country="EG" title="الجنيه المصري">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/f/fe/Flag_of_Egypt.svg"
+             class="w-7 h-7 rounded-full" alt="علم مصر" loading="lazy" decoding="async" width="28" height="28">
+    </button>
 </div>
 
