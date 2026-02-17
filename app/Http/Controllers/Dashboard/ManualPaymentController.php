@@ -13,6 +13,46 @@ use Illuminate\Support\Str;
 
 class ManualPaymentController extends Controller
 {
+    private function normalizeShop2TopUpOfferGroupFromName(?string $name): string
+    {
+        $name = (string) $name;
+        if (stripos($name, 'eu') !== false) {
+            return 'EU';
+        }
+        if (stripos($name, 'global') !== false) {
+            return 'GLOBAL';
+        }
+        return 'DEFAULT';
+    }
+
+    private function normalizeShop2TopUpOfferGroupFromRegion(?string $region): string
+    {
+        $region = strtoupper(trim((string) $region));
+        if ($region === 'EU') {
+            return 'EU';
+        }
+        // Shop2TopUp examples include RU; treat everything else as DEFAULT unless vendor specifies GLOBAL.
+        if ($region === 'GLOBAL') {
+            return 'GLOBAL';
+        }
+        return 'DEFAULT';
+    }
+
+    private function extractDiamondAmountKey(?string $name): ?int
+    {
+        $name = (string) $name;
+
+        // Prefer patterns like "100 💎" or "💎 100"
+        if (preg_match('/(\d+)\s*💎/u', $name, $m)) {
+            return (int) $m[1];
+        }
+        if (preg_match('/💎\s*(\d+)/u', $name, $m)) {
+            return (int) $m[1];
+        }
+
+        return null;
+    }
+
     public function index()
     {
         $requests = ManualPaymentRequest::query()
@@ -108,11 +148,47 @@ class ManualPaymentController extends Controller
                 return back()->withErrors(['error' => 'Shop2TopUp: لا يمكن التحقق من اللاعب الآن: ' . $msg . '. حاول بعد دقيقة.']);
             }
 
+            // Try to avoid REFUND_REGION by picking a region-matching offer if possible.
+            $playerGroup = $this->normalizeShop2TopUpOfferGroupFromRegion($check['region'] ?? null);
+            $productGroup = $this->normalizeShop2TopUpOfferGroupFromName($product?->name ?? null);
+            if ($playerGroup !== $productGroup) {
+                $amountKey = $this->extractDiamondAmountKey($product?->name ?? null);
+                if ($amountKey) {
+                    $alt = \App\Models\Product::query()
+                        ->where('service_type', 'gems')
+                        ->whereNotNull('itemID')
+                        ->where('itemID', '!=', '')
+                        ->whereHas('translations', function ($q) use ($amountKey, $playerGroup) {
+                            $q->where('name', 'like', '%' . $amountKey . '%');
+                            if ($playerGroup === 'EU') {
+                                $q->where('name', 'like', '%EU%');
+                            } elseif ($playerGroup === 'GLOBAL') {
+                                $q->where('name', 'like', '%Global%');
+                            } else {
+                                $q->where('name', 'not like', '%EU%')->where('name', 'not like', '%Global%');
+                            }
+                        })
+                        ->orderBy('id', 'desc')
+                        ->first();
+
+                    if ($alt && (int) ($alt->itemID ?? 0) > 0) {
+                        $offerId = (int) $alt->itemID;
+                    } else {
+                        return back()->withErrors([
+                            'error' => 'Shop2TopUp: منطقة اللاعب (' . ($check['region'] ?? '-') . ') لا تناسب هذه الباقة. اختر باقة مطابقة لمنطقته (EU/Global/Default).'
+                        ]);
+                    }
+                }
+            }
+
             $trxId = (string) Str::uuid();
             $topup = $service->topup($playerId, $offerId, $trxId);
 
             if (!($topup['success'] ?? false)) {
                 $msg = $topup['msg'] ?? 'TOPUP_FAILED';
+                if ($msg === 'REFUND_REGION') {
+                    return back()->withErrors(['error' => 'Shop2TopUp: REFUND_REGION — الباقة لا تناسب منطقة اللاعب. جرّب باقة EU أو Global أو الافتراضية حسب المنطقة.']);
+                }
                 return back()->withErrors(['error' => 'Shop2TopUp: فشل الشحن: ' . $msg]);
             }
 
