@@ -44,6 +44,17 @@ To use the repository pattern in this project, follow these steps:
 
 Make sure to define the methods in your interface and implement them in your repository to follow the repository pattern effectively
 
+## WhatsApp Notifications (WasenderAPI)
+
+This project supports sending a WhatsApp message to the admin when a new request is created (manual payment / cash exchange / money exchange).
+
+Set these environment variables in your `.env` (do **not** commit them):
+
+- `WASENDER_ENABLED=true`
+- `WASENDER_API_KEY=YOUR_TOKEN_HERE`
+- `WASENDER_NOTIFY_TO=9665XXXXXXXX,9627XXXXXXXX` (comma-separated phone numbers, digits only is preferred)
+- (optional) `WASENDER_BASE_URL=https://www.wasenderapi.com/api`
+
 
 ### Frontend Integration
 1. **Component Integration:**

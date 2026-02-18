@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\CashExchangeRequest;
 use App\Models\Category;
+use App\Models\ManualPaymentRequest;
+use App\Models\MoneyExchangeRequest;
 use App\Models\Setting;
+use App\Observers\NewDashboardRequestWhatsAppObserver;
 use App\Services\Currency\ExchangeRateService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -70,5 +74,15 @@ class AppServiceProvider extends ServiceProvider
                 ],
             ]);
         });
+
+        // WhatsApp notifications for new dashboard requests (best-effort)
+        try {
+            $observer = NewDashboardRequestWhatsAppObserver::class;
+            ManualPaymentRequest::observe($observer);
+            CashExchangeRequest::observe($observer);
+            MoneyExchangeRequest::observe($observer);
+        } catch (\Throwable $e) {
+            // ignore
+        }
     }
 }
