@@ -101,6 +101,30 @@
         </div>
     </div>
 
+    <!-- Money Exchange -->
+    <div data-kt-menu-trigger="click"
+         class="menu-item menu-accordion {{ is_active('admin.money_exchange.*') }}">
+        <span class="menu-link {{ is_active('admin.money_exchange.*') }}">
+            <span class="menu-icon"><i class="bi bi-currency-exchange fs-2"></i></span>
+            <span class="menu-title">تحويل الأموال (SAR↔USDT)</span>
+            <span class="menu-arrow"></span>
+        </span>
+        <div class="menu-sub menu-sub-accordion menu-active-bg">
+            <div class="menu-item">
+                <a class="menu-link {{ is_active('admin.money_exchange.settings.*') }}" href="{{ route('admin.money_exchange.settings.edit') }}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">الإعدادات</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a class="menu-link {{ is_active('admin.money_exchange.requests.*') }}" href="{{ route('admin.money_exchange.requests.index') }}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">طلبات التحويل</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Diamond codes -->
     <div data-kt-menu-trigger="click"
          class="menu-item menu-accordion {{ is_active('admin.diamond_codes.*') }}">

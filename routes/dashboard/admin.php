@@ -91,6 +91,17 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
             Route::post('requests/{cashExchangeRequest}/note', [Dashboard\CashExchangeRequestController::class, 'updateNote'])->name('requests.note');
             Route::post('requests/{cashExchangeRequest}/complete', [Dashboard\CashExchangeRequestController::class, 'complete'])->name('requests.complete');
         });
+
+        // Money Exchange (SAR ↔ USDT)
+        Route::prefix('money-exchange')->as('money_exchange.')->group(function () {
+            Route::get('settings', [Dashboard\MoneyExchangeSettingController::class, 'edit'])->name('settings.edit');
+            Route::post('settings', [Dashboard\MoneyExchangeSettingController::class, 'update'])->name('settings.update');
+
+            Route::get('requests', [Dashboard\MoneyExchangeRequestController::class, 'index'])->name('requests.index');
+            Route::get('requests/{moneyExchangeRequest}', [Dashboard\MoneyExchangeRequestController::class, 'show'])->name('requests.show');
+            Route::post('requests/{moneyExchangeRequest}/complete', [Dashboard\MoneyExchangeRequestController::class, 'complete'])->name('requests.complete');
+            Route::post('requests/{moneyExchangeRequest}/reject', [Dashboard\MoneyExchangeRequestController::class, 'reject'])->name('requests.reject');
+        });
         
         Route::get('dashboard', Dashboard\DashboardController::class)->name('dashboard');
     });

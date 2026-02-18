@@ -44,7 +44,7 @@
 
     <div class="mt-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
         <div class="text-sm font-extrabold text-gray-900">روابط سريعة</div>
-        <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <a href="{{ route('website.diamonds.charge') }}"
                class="rounded-2xl border border-gray-200 bg-white p-4 hover:bg-gray-50 transition">
                 <div class="font-extrabold text-gray-900">شحن الجواهر</div>
@@ -54,6 +54,16 @@
                class="rounded-2xl border border-gray-200 bg-white p-4 hover:bg-gray-50 transition">
                 <div class="font-extrabold text-gray-900">أكواد ملابس</div>
                 <div class="text-xs text-gray-500 mt-1">شراء أكواد جاهزة للتسليم.</div>
+            </a>
+            <a href="{{ route('website.cash_exchange.index') }}"
+               class="rounded-2xl border border-gray-200 bg-white p-4 hover:bg-gray-50 transition">
+                <div class="font-extrabold text-gray-900">استبدل رصيدك كاش</div>
+                <div class="text-xs text-gray-500 mt-1">ارسل كود البطاقة واستلم كاش.</div>
+            </a>
+            <a href="{{ route('website.money_exchange.index') }}"
+               class="rounded-2xl border border-gray-200 bg-white p-4 hover:bg-gray-50 transition">
+                <div class="font-extrabold text-gray-900">تحويل الأموال / تبادل العملات</div>
+                <div class="text-xs text-gray-500 mt-1">تحويل SAR ↔ USDT حسب الصرف.</div>
             </a>
         </div>
     </div>

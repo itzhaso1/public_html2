@@ -108,6 +108,19 @@ Route::group(
         Route::get('cash-exchange/requests/{reference}', [Website\CashExchangeController::class, 'show'])
             ->middleware('auth')
             ->name('website.cash_exchange.show');
+
+        // ===============================
+        // Money Exchange (تحويل الأموال / تبادل العملات)
+        // ===============================
+        Route::get('money-exchange', [Website\MoneyExchangeController::class, 'index'])
+            ->middleware('auth')
+            ->name('website.money_exchange.index');
+        Route::post('money-exchange', [Website\MoneyExchangeController::class, 'store'])
+            ->middleware('auth')
+            ->name('website.money_exchange.store');
+        Route::get('money-exchange/thanks/{reference}', [Website\MoneyExchangeController::class, 'thanks'])
+            ->middleware('auth')
+            ->name('website.money_exchange.thanks');
  
         // ===============================
         // Website pages
@@ -144,6 +157,10 @@ Route::group(
             Route::get('profile', [Customer\ProfileController::class, 'edit'])->name('profile');
             Route::post('profile', [Customer\ProfileController::class, 'update'])->name('profile.update');
             Route::post('profile/password', [Customer\ProfileController::class, 'updatePassword'])->name('profile.password');
+
+            // Money exchange tracking
+            Route::get('money-exchange', [Website\MoneyExchangeController::class, 'list'])->name('money_exchange.index');
+            Route::get('money-exchange/{reference}', [Website\MoneyExchangeController::class, 'show'])->name('money_exchange.show');
             
             
         });
