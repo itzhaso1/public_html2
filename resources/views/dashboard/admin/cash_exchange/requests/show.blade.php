@@ -22,6 +22,9 @@
             </div>
         </div>
         <div class="card-body">
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
             @if($errors->any())
                 <div class="alert alert-danger">{{ $errors->first() }}</div>
             @endif
@@ -41,6 +44,8 @@
                         <div>
                             @if($req->status === 'completed')
                                 <span class="badge badge-light-success">مكتمل</span>
+                            @elseif($req->status === 'rejected')
+                                <span class="badge badge-light-danger">مرفوض</span>
                             @else
                                 <span class="badge badge-light-warning">قيد المراجعة</span>
                             @endif
@@ -75,15 +80,50 @@
                     <button class="btn btn-sm btn-primary mt-3">حفظ الملاحظة</button>
                 </form>
 
-                @if($req->status !== 'completed')
-                    <form method="POST" action="{{ route('admin.cash_exchange.requests.complete', $req) }}" onsubmit="return confirm('تأكيد تغيير الحالة إلى مكتمل؟');">
-                        @csrf
-                        <input type="hidden" name="admin_note" value="{{ $req->admin_note }}">
-                        <button class="btn btn-sm btn-success">تغيير الحالة إلى مكتمل</button>
-                    </form>
-                @else
-                    <div class="text-muted">تم إكمال الطلب ولا يمكن تغييره مرة أخرى.</div>
-                @endif
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <form method="POST" action="{{ route('admin.cash_exchange.requests.complete', $req) }}"
+                              onsubmit="return confirm('تأكيد تغيير الحالة إلى مكتمل؟');">
+                            @csrf
+                            <input type="hidden" name="admin_note" value="{{ $req->admin_note }}">
+                            <button class="btn btn-sm btn-success" {{ ($req->status ?? 'pending') !== 'pending' ? 'disabled' : '' }}>
+                                تغيير الحالة إلى مكتمل
+                            </button>
+                            @if(($req->status ?? '') !== 'pending')
+                                <div class="text-muted mt-2">لا يمكن تنفيذ الإجراء إلا مرة واحدة عندما يكون الطلب قيد المراجعة.</div>
+                            @endif
+                        </form>
+                    </div>
+
+                    <div class="col-md-6">
+                        <form method="POST" action="{{ route('admin.cash_exchange.requests.reject', $req) }}"
+                              onsubmit="return confirm('تأكيد رفض الطلب؟');">
+                            @csrf
+                            <label class="form-label fw-bold">سبب الرفض (مطلوب)</label>
+                            <input type="text" name="admin_note" id="cashRejectNote" class="form-control mb-2"
+                                   placeholder="مثال: البطاقة مستخدمة أو خاطئة"
+                                   value="{{ old('admin_note') }}"
+                                   {{ ($req->status ?? 'pending') !== 'pending' ? 'disabled' : '' }}>
+
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                <button type="button" class="btn btn-sm btn-light"
+                                        onclick="const i=document.getElementById('cashRejectNote'); if(i){ i.value='البطاقة مستخدمة'; i.focus(); }"
+                                        {{ ($req->status ?? 'pending') !== 'pending' ? 'disabled' : '' }}>
+                                    البطاقة مستخدمة
+                                </button>
+                                <button type="button" class="btn btn-sm btn-light"
+                                        onclick="const i=document.getElementById('cashRejectNote'); if(i){ i.value='البطاقة خاطئة'; i.focus(); }"
+                                        {{ ($req->status ?? 'pending') !== 'pending' ? 'disabled' : '' }}>
+                                    البطاقة خاطئة
+                                </button>
+                            </div>
+
+                            <button class="btn btn-sm btn-danger" {{ ($req->status ?? 'pending') !== 'pending' ? 'disabled' : '' }}>
+                                رفض الطلب
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

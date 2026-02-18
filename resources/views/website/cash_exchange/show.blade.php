@@ -6,10 +6,17 @@
 
 @section('content')
 @php
-    $statusLabel = ($req->status ?? '') === 'completed' ? 'مكتمل' : 'قيد المراجعة';
-    $statusClass = ($req->status ?? '') === 'completed'
-        ? 'bg-green-100 text-green-800 border-green-200'
-        : 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    $status = (string) ($req->status ?? 'pending');
+    $statusLabel = match ($status) {
+        'completed' => 'مكتمل',
+        'rejected' => 'مرفوض',
+        default => 'قيد المراجعة',
+    };
+    $statusClass = match ($status) {
+        'completed' => 'bg-green-100 text-green-800 border-green-200',
+        'rejected' => 'bg-red-100 text-red-800 border-red-200',
+        default => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    };
 
     $mask = function (?string $v) {
         $v = trim((string) $v);
@@ -49,8 +56,11 @@
             <div class="rounded-2xl bg-gray-50 border border-gray-100 p-4">
                 <div class="text-xs text-gray-500">المبلغ بالكاش</div>
                 <div class="mt-1 font-extrabold text-green-700">{{ number_format((float)$req->cash_value, 2) }} {{ $req->currency }}</div>
-                @if(($req->status ?? '') === 'completed' && $req->completed_at)
+                @if($status === 'completed' && $req->completed_at)
                     <div class="mt-1 text-xs text-gray-500">تم الإكمال: {{ $req->completed_at?->format('Y-m-d H:i') }}</div>
+                @endif
+                @if($status === 'rejected' && $req->rejected_at)
+                    <div class="mt-1 text-xs text-gray-500">تم الرفض: {{ $req->rejected_at?->format('Y-m-d H:i') }}</div>
                 @endif
             </div>
         </div>

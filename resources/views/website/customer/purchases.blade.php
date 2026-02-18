@@ -123,10 +123,16 @@
             <div class="mt-3 space-y-3">
                 @foreach($cashRequests as $r)
                     @php
-                        $statusLabel = $r->status === 'completed' ? 'مكتمل' : 'قيد المراجعة';
-                        $statusClass = $r->status === 'completed'
-                            ? 'bg-green-100 text-green-800 border-green-200'
-                            : 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                        $statusLabel = match((string) ($r->status ?? 'pending')) {
+                            'completed' => 'مكتمل',
+                            'rejected' => 'مرفوض',
+                            default => 'قيد المراجعة',
+                        };
+                        $statusClass = match((string) ($r->status ?? 'pending')) {
+                            'completed' => 'bg-green-100 text-green-800 border-green-200',
+                            'rejected' => 'bg-red-100 text-red-800 border-red-200',
+                            default => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                        };
                     @endphp
 
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
@@ -156,6 +162,11 @@
                         @if($r->status === 'completed' && $r->completed_at)
                             <div class="mt-3 text-xs text-gray-500">
                                 تم الإكمال بتاريخ: {{ $r->completed_at?->format('Y-m-d H:i') }}
+                            </div>
+                        @endif
+                        @if($r->status === 'rejected' && $r->rejected_at)
+                            <div class="mt-3 text-xs text-gray-500">
+                                تم الرفض بتاريخ: {{ $r->rejected_at?->format('Y-m-d H:i') }}
                             </div>
                         @endif
 

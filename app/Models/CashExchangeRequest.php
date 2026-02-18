@@ -24,12 +24,14 @@ class CashExchangeRequest extends Model
         'status',
         'admin_note',
         'completed_at',
+        'rejected_at',
     ];
 
     protected $casts = [
         'face_value' => 'int',
         'cash_value' => 'decimal:2',
         'completed_at' => 'datetime',
+        'rejected_at' => 'datetime',
         // Laravel built-in encrypted cast (stores encrypted string in DB)
         'card_code' => 'encrypted',
     ];

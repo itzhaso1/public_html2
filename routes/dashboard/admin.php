@@ -95,6 +95,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
             Route::get('requests/{cashExchangeRequest}', [Dashboard\CashExchangeRequestController::class, 'show'])->name('requests.show');
             Route::post('requests/{cashExchangeRequest}/note', [Dashboard\CashExchangeRequestController::class, 'updateNote'])->name('requests.note');
             Route::post('requests/{cashExchangeRequest}/complete', [Dashboard\CashExchangeRequestController::class, 'complete'])->name('requests.complete');
+            Route::post('requests/{cashExchangeRequest}/reject', [Dashboard\CashExchangeRequestController::class, 'reject'])->name('requests.reject');
             Route::delete('requests/{cashExchangeRequest}', [Dashboard\CashExchangeRequestController::class, 'destroy'])->name('requests.destroy');
         });
 

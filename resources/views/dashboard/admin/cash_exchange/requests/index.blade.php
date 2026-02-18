@@ -9,13 +9,15 @@
         <div class="pt-5 border-0 card-header">
             <h3 class="card-title align-items-start flex-column">
                 <span class="mb-1 card-label fw-bolder fs-3">{{ $pageTitle }}</span>
-                <span class="mt-1 text-muted fw-bold fs-7">طلبات العملاء (قيد المراجعة / مكتمل)</span>
+                <span class="mt-1 text-muted fw-bold fs-7">طلبات العملاء (قيد المراجعة / مكتمل / مرفوض)</span>
             </h3>
             <div class="card-toolbar d-flex gap-2">
                 <a class="btn btn-sm {{ ($status ?? 'pending') === 'pending' ? 'btn-primary' : 'btn-light' }}"
                    href="{{ route('admin.cash_exchange.requests.index', ['status' => 'pending']) }}">قيد المراجعة</a>
                 <a class="btn btn-sm {{ ($status ?? '') === 'completed' ? 'btn-primary' : 'btn-light' }}"
                    href="{{ route('admin.cash_exchange.requests.index', ['status' => 'completed']) }}">مكتمل</a>
+                <a class="btn btn-sm {{ ($status ?? '') === 'rejected' ? 'btn-primary' : 'btn-light' }}"
+                   href="{{ route('admin.cash_exchange.requests.index', ['status' => 'rejected']) }}">مرفوض</a>
                 <a class="btn btn-sm {{ ($status ?? '') === 'all' ? 'btn-primary' : 'btn-light' }}"
                    href="{{ route('admin.cash_exchange.requests.index', ['status' => 'all']) }}">الكل</a>
                 <form id="cashBulkDeleteForm" method="POST" action="{{ route('admin.cash_exchange.requests.bulk_delete') }}" class="d-inline-block ms-2">
@@ -72,6 +74,8 @@
                             <td>
                                 @if($r->status === 'completed')
                                     <span class="badge badge-light-success">مكتمل</span>
+                                @elseif($r->status === 'rejected')
+                                    <span class="badge badge-light-danger">مرفوض</span>
                                 @else
                                     <span class="badge badge-light-warning">قيد المراجعة</span>
                                 @endif
