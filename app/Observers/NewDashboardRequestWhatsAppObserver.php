@@ -6,8 +6,10 @@ use App\Jobs\SendWasenderWhatsAppMessage;
 use App\Models\CashExchangeRequest;
 use App\Models\ManualPaymentRequest;
 use App\Models\MoneyExchangeRequest;
+use App\Models\Order;
 use App\Support\WhatsApp\WhatsAppNumber;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class NewDashboardRequestWhatsAppObserver
 {
@@ -27,7 +29,7 @@ class NewDashboardRequestWhatsAppObserver
         if ($adminText !== '' && !empty($recipients)) {
             foreach ($recipients as $to) {
                 // After-response so we don't slow down the customer request.
-                SendWasenderWhatsAppMessage::dispatch($to, $adminText)->afterResponse();
+                $this->dispatchSafely($to, $adminText);
             }
         }
 
@@ -35,7 +37,7 @@ class NewDashboardRequestWhatsAppObserver
             $customerTo = $this->customerNumber($model);
             $customerText = $this->buildCustomerMessage($model);
             if ($customerTo !== '' && $customerText !== '') {
-                SendWasenderWhatsAppMessage::dispatch($customerTo, $customerText)->afterResponse();
+                $this->dispatchSafely($customerTo, $customerText);
             }
         }
     }
@@ -59,6 +61,16 @@ class NewDashboardRequestWhatsAppObserver
 
     private function buildAdminMessage(Model $model): string
     {
+        if ($model instanceof Order) {
+            $number = $model->number ?? $model->id;
+            return trim(
+                "طلب جديد: شراء من المتجر\n" .
+                "رقم الطلب: {$number}\n" .
+                "المبلغ: {$model->total_price}\n" .
+                "الحالة: {$model->status}\n"
+            );
+        }
+
         if ($model instanceof ManualPaymentRequest) {
             $url = $this->safeRoute('admin.manual_payments.show', $model->id);
             return trim(
@@ -104,6 +116,19 @@ class NewDashboardRequestWhatsAppObserver
 
     private function customerNumber(Model $model): string
     {
+        if ($model instanceof Order) {
+            try {
+                $model->loadMissing(['user.profile', 'addresses']);
+            } catch (\Throwable $e) {}
+
+            $uPhone = WhatsAppNumber::normalize($model->user?->phone ?? '');
+            if ($uPhone !== '') return $uPhone;
+            $pPhone = WhatsAppNumber::normalize($model->user?->profile?->phone ?? '');
+            if ($pPhone !== '') return $pPhone;
+            $addrPhone = WhatsAppNumber::normalize(optional($model->addresses?->first())->phone ?? '');
+            return $addrPhone;
+        }
+
         // Prefer explicit contact_phone (if ever used), then user phone, then user profile phone.
         $contact = method_exists($model, 'getAttribute') ? (string) ($model->getAttribute('contact_phone') ?? '') : '';
         $contact = WhatsAppNumber::normalize($contact);
@@ -129,6 +154,19 @@ class NewDashboardRequestWhatsAppObserver
     {
         $app = (string) config('app.name', 'المتجر');
         $base = rtrim((string) config('app.url', ''), '/');
+
+        if ($model instanceof Order) {
+            $number = $model->number ?? $model->id;
+            $link = $this->safeRoute('customer.orders_by_status', 'pending');
+            return trim(
+                "{$app}\n" .
+                "تم استلام طلبك ✅\n" .
+                "رقم الطلب: {$number}\n" .
+                "المبلغ: {$model->total_price}\n" .
+                "الحالة: قيد الانتظار\n" .
+                ($link ? "متابعة الطلبات: {$link}\n" : ($base ? "متابعة الطلبات: {$base}/ar/customer/orders\n" : ''))
+            );
+        }
 
         if ($model instanceof ManualPaymentRequest) {
             $link = $base ? ($base . '/ar/diamonds/manual-payment/thanks/' . $model->reference) : null;
@@ -176,6 +214,21 @@ class NewDashboardRequestWhatsAppObserver
         } catch (\Throwable $e) {
             return null;
         }
+    }
+
+    private function dispatchSafely(string $to, string $text): void
+    {
+        try {
+            if (DB::transactionLevel() > 0) {
+                DB::afterCommit(function () use ($to, $text) {
+                    SendWasenderWhatsAppMessage::dispatch($to, $text)->afterResponse();
+                });
+                return;
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+        SendWasenderWhatsAppMessage::dispatch($to, $text)->afterResponse();
     }
 }
 
