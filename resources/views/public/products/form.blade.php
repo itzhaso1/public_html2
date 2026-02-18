@@ -325,6 +325,50 @@
 let currentStep = 1;
 const totalSteps = 7;
 let isProcessingImages = false;
+const MAX_IMG_DIM = 1600;
+const JPEG_QUALITY = 0.72;
+
+async function downscaleToJpeg(file, opts = {}) {
+  const maxDim = opts.maxDim || MAX_IMG_DIM;
+  const quality = (typeof opts.quality === 'number') ? opts.quality : JPEG_QUALITY;
+
+  if (!file || !file.type || !file.type.startsWith('image/')) return file;
+
+  // Compress only if the file is large (keeps fast devices fast)
+  const isHeic = file.type === 'image/heic' || (file.name || '').toLowerCase().endsWith('.heic');
+  if (!isHeic && (file.size || 0) < 900 * 1024) {
+    return file;
+  }
+
+  const img = await new Promise((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = URL.createObjectURL(file);
+  });
+
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  const scale = Math.min(1, maxDim / Math.max(w, h));
+  const tw = Math.max(1, Math.round(w * scale));
+  const th = Math.max(1, Math.round(h * scale));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = tw;
+  canvas.height = th;
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.drawImage(img, 0, 0, tw, th);
+
+  const blob = await new Promise((resolve) => {
+    canvas.toBlob((b) => resolve(b), 'image/jpeg', quality);
+  });
+
+  try { URL.revokeObjectURL(img.src); } catch (e) {}
+
+  if (!blob) return file;
+  const base = (file.name || 'image').replace(/\.(heic|png|webp|jpeg|jpg)$/i, '');
+  return new File([blob], base + '.jpg', { type: 'image/jpeg' });
+}
 
 function setWizardBusy(state, label = 'التالي') {
     isProcessingImages = state;
@@ -543,6 +587,13 @@ async function previewMainImage(input) {
     input.files = dt.files;
   }
 
+  try {
+    file = await downscaleToJpeg(file);
+    const dt2 = new DataTransfer();
+    dt2.items.add(file);
+    input.files = dt2.files;
+  } catch (e) {}
+
   fileName.innerText = file.name;
   previewImg.src = URL.createObjectURL(file);
   previewBox.classList.remove('hidden');
@@ -583,18 +634,33 @@ async function previewGalleryImages(input) {
     galleryFiles = [];
     preview.innerHTML = '';
 
-    for (let file of files) {
-        if (file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic')) {
-            const blob = await heic2any({
-                blob: file,
-                toType: 'image/jpeg',
-                quality: 0.8
-            });
+    for (let i = 0; i < files.length; i++) {
+        let file = files[i];
 
-            file = new File([blob], file.name.replace('.heic', '.jpg'), {
-                type: 'image/jpeg'
-            });
+        if (nameLabel) {
+            nameLabel.textContent = `جاري تجهيز الصور... (${i + 1} / ${files.length})`;
+            nameLabel.classList.remove('text-red-600', 'text-green-600');
+            nameLabel.classList.add('text-gray-500');
         }
+
+        try {
+            if (file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic')) {
+                const blob = await heic2any({
+                    blob: file,
+                    toType: 'image/jpeg',
+                    quality: 0.8
+                });
+
+                file = new File([blob], file.name.replace('.heic', '.jpg'), {
+                    type: 'image/jpeg'
+                });
+            }
+        } catch (e) {}
+
+        try {
+            file = await downscaleToJpeg(file);
+        } catch (e) {}
+
         galleryFiles.push(file);
     }
 

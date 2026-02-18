@@ -79,23 +79,29 @@ video {
 
        <!-- سلايدر -->
 <section class="mt-6">
+@php
+  $mainImage = $product->getMediaUrl('product', $product, null, 'media', 'product');
+  $galleryImages = $product->getMultipleMediaUrls('product/gallery', $product, 'media', 'gallery');
+  $sliderImages = array_values(array_filter(array_merge(
+      [$mainImage],
+      array_map(fn ($img) => $img['original'] ?? null, (array) $galleryImages)
+  )));
+  $fallback = asset('img/قريبا.jpg');
+@endphp
   <div id="sliderWrap"
     class="relative w-full max-w-sm mx-auto overflow-hidden rounded-lg shadow-lg bg-white">
     <div id="sliderTrack"
       class="slider-track flex transition-transform duration-500 ease-in-out">
       <!-- الصور الكبيرة -->
-      <div class="flex-shrink-0 w-full aspect-[4/3] bg-black flex items-center justify-center">
-        <img src="image1.jpg" alt="صورة 1"
-          class="w-full h-full object-contain">
-      </div>
-      <div class="flex-shrink-0 w-full aspect-[4/3] bg-black flex items-center justify-center">
-        <img src="image2.jpg" alt="صورة 2"
-          class="w-full h-full object-contain">
-      </div>
-      <div class="flex-shrink-0 w-full aspect-[4/3] bg-black flex items-center justify-center">
-        <img src="image3.jpg" alt="صورة 3"
-          class="w-full h-full object-contain">
-      </div>
+      @forelse($sliderImages as $idx => $src)
+        <div class="flex-shrink-0 w-full aspect-[4/3] bg-black flex items-center justify-center">
+          <img src="{{ $src ?: $fallback }}" alt="صورة {{ $idx + 1 }}" class="w-full h-full object-contain" loading="lazy" decoding="async">
+        </div>
+      @empty
+        <div class="flex-shrink-0 w-full aspect-[4/3] bg-black flex items-center justify-center">
+          <img src="{{ $fallback }}" alt="صورة" class="w-full h-full object-contain" loading="lazy" decoding="async">
+        </div>
+      @endforelse
     </div>
 
     <!-- أزرار -->
@@ -112,15 +118,11 @@ video {
   <div id="thumbs"
     class="flex gap-3 overflow-x-auto thumbs-scroll py-3 px-4 touch-pan-x snap-x snap-mandatory justify-start items-center"
     style="scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;">
-    
-    <img src="image1.jpg" alt="صورة مصغرة 1"
-      class="w-20 h-20 object-cover rounded-xl border-2 border-transparent cursor-pointer hover:scale-105 hover:shadow-lg hover:border-blue-500 transition-all duration-300 ease-out">
-      
-    <img src="image2.jpg" alt="صورة مصغرة 2"
-      class="w-20 h-20 object-cover rounded-xl border-2 border-transparent cursor-pointer hover:scale-105 hover:shadow-lg hover:border-blue-500 transition-all duration-300 ease-out">
-      
-    <img src="image3.jpg" alt="صورة مصغرة 3"
-      class="w-20 h-20 object-cover rounded-xl border-2 border-transparent cursor-pointer hover:scale-105 hover:shadow-lg hover:border-blue-500 transition-all duration-300 ease-out">
+
+    @foreach($sliderImages as $idx => $src)
+      <img src="{{ $src ?: $fallback }}" alt="صورة مصغرة {{ $idx + 1 }}"
+        class="w-20 h-20 object-cover rounded-xl border-2 border-transparent cursor-pointer hover:scale-105 hover:shadow-lg hover:border-blue-500 transition-all duration-300 ease-out">
+    @endforeach
   </div>
 </div>
 
@@ -662,107 +664,6 @@ window.addEventListener('load', () => {
 @endpush--}}
 @push('js')
 <script>
-    (function () {
-  const { mainImage, galleryImages } = window.productData || {};
-
-  if (!mainImage && (!galleryImages || galleryImages.length === 0)) return;
-
-  // دمج الصورة الرئيسية مع صور الجاليري
-  const sliderImages = [mainImage, ...(galleryImages || []).map(img => img.original)];
-
-  const sliderWrap = document.getElementById('sliderWrap');
-  const track = document.getElementById('sliderTrack');
-  const thumbsContainer = document.getElementById('thumbs');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-
-  let currentIndex = 0;
-  let slideWidth = 0;
-
-  function buildSlidesAndThumbs() {
-    track.innerHTML = '';
-    thumbsContainer.innerHTML = '';
-
-    sliderImages.forEach((src, idx) => {
-      const slideDiv = document.createElement('div');
-      slideDiv.className = 'slide';
-      slideDiv.style.flexShrink = '0'; // مهم عشان كل سلايد يبقى ثابت في العرض
-      slideDiv.style.height = '100%';
-
-      const inner = document.createElement('div');
-      inner.className = 'slide-inner h-full flex justify-center items-center';
-
-      const img = document.createElement('img');
-      img.className = 'original object-cover object-center w-full h-full';
-      img.src = src;
-      img.alt = `Slide ${idx + 1}`;
-      img.loading = 'lazy';
-
-      inner.appendChild(img);
-      slideDiv.appendChild(inner);
-      track.appendChild(slideDiv);
-
-      // الثامبنيلز
-      const thumb = document.createElement('img');
-      thumb.src = src;
-      thumb.dataset.index = idx;
-      thumb.alt = `Thumb ${idx + 1}`;
-      thumb.className = 'w-20 h-14 object-cover rounded cursor-pointer border-2 border-transparent snap-start';
-      thumb.addEventListener('click', () => goToSlide(idx));
-      thumbsContainer.appendChild(thumb);
-    });
-  }
-
-  function updateLayout() {
-    slideWidth = sliderWrap.clientWidth;
-    Array.from(track.children).forEach(slide => {
-      slide.style.width = `${slideWidth}px`;
-    });
-    track.style.width = `${slideWidth * sliderImages.length}px`;
-    //track.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-    track.style.transform = `translate3d(-${currentIndex * slideWidth}px, 0, 0)`;
-  }
-
-  function goToSlide(i, smooth = true) {
-    const total = sliderImages.length;
-    if (total === 0) return;
-    currentIndex = Math.max(0, Math.min(i, total - 1));
-    if (!smooth) {
-      track.style.transition = 'none';
-      track.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-      void track.offsetWidth; // لإعادة التفعيل
-      track.style.transition = 'transform 0.4s ease-in-out';
-    } else {
-      track.style.transition = 'transform 0.4s ease-in-out';
-      track.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-    }
-    updateActiveThumb();
-    console.log('goToSlide =>', currentIndex, sliderImages[currentIndex]);
-  }
-
-  function updateActiveThumb() {
-    const thumbs = thumbsContainer.querySelectorAll('img');
-    thumbs.forEach((t, idx) => t.classList.toggle('thumb-active', idx === currentIndex));
-  }
-
-  nextBtn.addEventListener('click', () => goToSlide((currentIndex + 1) % sliderImages.length));
-  prevBtn.addEventListener('click', () => goToSlide((currentIndex - 1 + sliderImages.length) % sliderImages.length));
-
-  window.addEventListener('resize', () => {
-    clearTimeout(window._sliderResizeTimer);
-    window._sliderResizeTimer = setTimeout(updateLayout, 150);
-  });
-
-  function init() {
-    buildSlidesAndThumbs();
-    setTimeout(() => {
-      updateLayout();
-      goToSlide(0, false);
-    }, 100);
-  }
-
-  window.addEventListener('load', init);
-})();
 </script>
 
 
