@@ -12,6 +12,8 @@ use App\Services\Integrations\Shop2TopUp\Shop2TopUpService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\ChargeCompletedNotification;
+use App\Jobs\SendWasenderWhatsAppMessage;
+use App\Support\WhatsApp\WhatsAppNumber;
 
 class ManualPaymentController extends Controller
 {
@@ -153,6 +155,7 @@ class ManualPaymentController extends Controller
 
     public function approve(Request $request, ManualPaymentRequest $manualPaymentRequest)
     {
+        $oldStatus = (string) ($manualPaymentRequest->status ?? '');
         $request->validate([
             'admin_note' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -349,6 +352,10 @@ class ManualPaymentController extends Controller
             'admin_note' => $request->input('admin_note'),
         ]);
 
+        if ($oldStatus !== 'approved') {
+            $this->notifyCustomerDecision($manualPaymentRequest, true);
+        }
+
         return redirect()
             ->route('admin.manual_payments.show', $manualPaymentRequest)
             ->with('success', 'تمت الموافقة على الطلب.');
@@ -356,6 +363,7 @@ class ManualPaymentController extends Controller
 
     public function reject(Request $request, ManualPaymentRequest $manualPaymentRequest)
     {
+        $oldStatus = (string) ($manualPaymentRequest->status ?? '');
         $request->validate([
             'admin_note' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -367,6 +375,10 @@ class ManualPaymentController extends Controller
             'admin_note' => $request->input('admin_note'),
         ]);
 
+        if ($oldStatus !== 'rejected') {
+            $this->notifyCustomerDecision($manualPaymentRequest, false);
+        }
+
         if (($manualPaymentRequest->product?->service_type ?? null) === 'codes') {
             foreach (['ar', 'en'] as $locale) {
                 Cache::forget("diamonds.codes.$locale");
@@ -376,6 +388,37 @@ class ManualPaymentController extends Controller
         return redirect()
             ->route('admin.manual_payments.show', $manualPaymentRequest)
             ->with('success', 'تم رفض الطلب.');
+    }
+
+    private function notifyCustomerDecision(ManualPaymentRequest $mpr, bool $approved): void
+    {
+        if (! (bool) config('services.wasender.enabled', false)) return;
+        if (! (bool) config('services.wasender.notify_customers', true)) return;
+
+        try { $mpr->loadMissing(['user', 'product', 'user.profile']); } catch (\Throwable $e) {}
+
+        $to = WhatsAppNumber::normalize($mpr->contact_phone ?? '');
+        if ($to === '') $to = WhatsAppNumber::normalize($mpr->user?->phone ?? '');
+        if ($to === '') $to = WhatsAppNumber::normalize($mpr->user?->profile?->phone ?? '');
+        if ($to === '') return;
+
+        $app = (string) config('app.name', 'المتجر');
+        $status = $approved ? 'تم قبول طلبك ✅' : 'تم رفض طلبك ❌';
+        $note = trim((string) ($mpr->admin_note ?? ''));
+        $noteLine = $note !== '' ? ("\nملاحظة: " . mb_substr($note, 0, 180)) : '';
+        $link = null;
+        try { $link = route('website.diamonds.manual_payment.thanks', ['reference' => $mpr->reference]); } catch (\Throwable $e) {}
+
+        $text = trim(
+            "{$app}\n" .
+            "{$status}\n" .
+            "رقم الطلب: {$mpr->reference}\n" .
+            ($mpr->product?->name ? ("المنتج: " . $mpr->product->name . "\n") : '') .
+            ($link ? "تفاصيل الطلب: {$link}\n" : '') .
+            $noteLine
+        );
+
+        SendWasenderWhatsAppMessage::dispatch($to, $text)->afterResponse();
     }
 
     public function destroy(Request $request, ManualPaymentRequest $manualPaymentRequest)

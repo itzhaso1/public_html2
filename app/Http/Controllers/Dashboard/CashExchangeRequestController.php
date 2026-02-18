@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendWasenderWhatsAppMessage;
 use App\Models\CashExchangeRequest;
+use App\Support\WhatsApp\WhatsAppNumber;
 use Illuminate\Http\Request;
 
 class CashExchangeRequestController extends Controller
@@ -41,6 +43,7 @@ class CashExchangeRequestController extends Controller
 
     public function complete(Request $request, CashExchangeRequest $cashExchangeRequest)
     {
+        $oldStatus = (string) ($cashExchangeRequest->status ?? '');
         $data = $request->validate([
             'admin_note' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -50,6 +53,10 @@ class CashExchangeRequestController extends Controller
             'completed_at' => now(),
             'admin_note' => $data['admin_note'] ?? $cashExchangeRequest->admin_note,
         ]);
+
+        if ($oldStatus !== 'completed') {
+            $this->notifyCustomer($cashExchangeRequest);
+        }
 
         return back()->with('success', 'تم تغيير الحالة إلى مكتمل ✅');
     }
@@ -117,6 +124,34 @@ class CashExchangeRequestController extends Controller
         $q->delete();
 
         return back()->with('success', 'تم حذف الطلبات ✅');
+    }
+
+    private function notifyCustomer(CashExchangeRequest $req): void
+    {
+        if (! (bool) config('services.wasender.enabled', false)) return;
+        if (! (bool) config('services.wasender.notify_customers', true)) return;
+
+        try { $req->loadMissing(['user', 'user.profile', 'offer']); } catch (\Throwable $e) {}
+
+        $to = WhatsAppNumber::normalize($req->user?->phone ?? '');
+        if ($to === '') $to = WhatsAppNumber::normalize($req->user?->profile?->phone ?? '');
+        if ($to === '') return;
+
+        $app = (string) config('app.name', 'المتجر');
+        $offer = (string) ($req->offer?->name ?? '');
+        $note = trim((string) ($req->admin_note ?? ''));
+        $noteLine = $note !== '' ? ("\nملاحظة: " . mb_substr($note, 0, 180)) : '';
+
+        $text = trim(
+            "{$app}\n" .
+            "تم إكمال طلبك ✅\n" .
+            "الخدمة: استبدال رصيدك كاش\n" .
+            "رقم الطلب: {$req->reference}\n" .
+            ($offer !== '' ? "الفئة: {$offer}\n" : '') .
+            $noteLine
+        );
+
+        SendWasenderWhatsAppMessage::dispatch($to, $text)->afterResponse();
     }
 }
 

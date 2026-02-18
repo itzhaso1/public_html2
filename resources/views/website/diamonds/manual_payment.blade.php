@@ -233,14 +233,33 @@
                     </div>
                 @endunless
 
+                @php
+                    $phoneFull = preg_replace('/\D+/', '', (string) old('contact_phone', $userPhone));
+                    $defaultCountry = 'SA';
+                    $defaultLocal = $phoneFull;
+                    if (str_starts_with($phoneFull, '962')) { $defaultCountry = 'JO'; $defaultLocal = substr($phoneFull, 3); }
+                    elseif (str_starts_with($phoneFull, '966')) { $defaultCountry = 'SA'; $defaultLocal = substr($phoneFull, 3); }
+                    $defaultLocal = ltrim((string) $defaultLocal, '0');
+                @endphp
                 <div>
                     <label class="block text-sm font-bold text-gray-800 mb-1">رقم واتساب لاستلام إشعار الطلب</label>
-                    <input type="tel" name="contact_phone" value="{{ old('contact_phone', $userPhone) }}"
-                           class="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-yellow-400/60"
-                           placeholder="مثال: 9665XXXXXXXX"
-                           {{ $phoneRequired ? 'required' : '' }}>
-                    <div class="text-xs text-gray-500 mt-1">اكتب الرقم الدولي بدون + وبدون مسافات.</div>
+                    <input type="hidden" name="contact_phone" id="waFullPhone" value="{{ $phoneFull }}">
+                    <div class="flex gap-2">
+                        <select name="contact_phone_country" id="waCountry"
+                                class="w-40 rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-yellow-400/60">
+                            <option value="SA" {{ ($defaultCountry === 'SA') ? 'selected' : '' }}>🇸🇦 +966</option>
+                            <option value="JO" {{ ($defaultCountry === 'JO') ? 'selected' : '' }}>🇯🇴 +962</option>
+                        </select>
+                        <input type="tel" name="contact_phone_local" id="waLocal"
+                               value="{{ old('contact_phone_local', $defaultLocal) }}"
+                               class="flex-1 rounded-xl border border-gray-200 px-4 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-yellow-400/60"
+                               placeholder="اكتب رقمك فقط"
+                               inputmode="numeric" autocomplete="tel"
+                               {{ $phoneRequired ? 'required' : '' }}>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">سيتم إضافة كود الدولة تلقائيًا. اكتب الرقم بدون 0 في البداية.</div>
                     @error('contact_phone')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                    @error('contact_phone_local')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                 </div>
 
                 <div>
@@ -270,6 +289,27 @@
 @endsection
 
 @push('js')
+<script>
+  (function () {
+    const country = document.getElementById('waCountry');
+    const local = document.getElementById('waLocal');
+    const full = document.getElementById('waFullPhone');
+    if (!country || !local || !full) return;
+
+    const dialByCountry = { SA: '966', JO: '962' };
+    const digitsOnly = (v) => String(v || '').replace(/\D+/g, '');
+    const build = () => {
+      const c = String(country.value || 'SA').toUpperCase();
+      const dial = dialByCountry[c] || '966';
+      let l = digitsOnly(local.value);
+      l = l.replace(/^0+/, ''); // remove leading zeros
+      full.value = dial + l;
+    };
+    country.addEventListener('change', build);
+    local.addEventListener('input', build);
+    build();
+  })();
+</script>
 @unless($isCodes)
 <script>
   (function () {

@@ -117,13 +117,25 @@ class ManualPaymentController extends Controller
         $existingPhone = WhatsAppNumber::normalize($request->user()?->phone ?? '')
             ?: WhatsAppNumber::normalize($request->user()?->profile?->phone ?? '');
         // If no phone saved on account, require it so WhatsApp confirmation can be sent.
-        $rules['contact_phone'] = $existingPhone === ''
-            ? ['required', 'string', 'min:8', 'max:32']
-            : ['nullable', 'string', 'min:8', 'max:32'];
+        $rules['contact_phone'] = ['nullable', 'string', 'max:64'];
+        $rules['contact_phone_country'] = ['nullable', 'in:SA,JO'];
+        $rules['contact_phone_local'] = ['nullable', 'string', 'max:32'];
 
         $data = $request->validate($rules);
 
         $contactPhone = WhatsAppNumber::normalize($data['contact_phone'] ?? '');
+        if ($contactPhone === '') {
+            $country = strtoupper(trim((string) ($data['contact_phone_country'] ?? '')));
+            $dial = $country === 'JO' ? '962' : '966';
+            $local = WhatsAppNumber::normalize($data['contact_phone_local'] ?? '');
+            $local = ltrim($local, '0');
+            $contactPhone = $dial . $local;
+        }
+        $contactPhone = WhatsAppNumber::normalize($contactPhone);
+
+        if ($existingPhone === '' && $contactPhone === '') {
+            return back()->withErrors(['contact_phone' => 'رقم الواتساب مطلوب لاستلام إشعار الطلب.'])->withInput();
+        }
         if ($contactPhone !== '' && $existingPhone === '' && $request->user()) {
             try {
                 $request->user()->update(['phone' => $contactPhone]);

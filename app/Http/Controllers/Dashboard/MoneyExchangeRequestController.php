@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendWasenderWhatsAppMessage;
 use App\Models\MoneyExchangeRequest;
+use App\Support\WhatsApp\WhatsAppNumber;
 use Illuminate\Http\Request;
 
 class MoneyExchangeRequestController extends Controller
@@ -41,6 +43,7 @@ class MoneyExchangeRequestController extends Controller
 
     public function complete(Request $request, MoneyExchangeRequest $moneyExchangeRequest)
     {
+        $oldStatus = (string) ($moneyExchangeRequest->status ?? '');
         $data = $request->validate([
             'admin_note' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -51,11 +54,16 @@ class MoneyExchangeRequestController extends Controller
             'admin_note' => $data['admin_note'] ?? $moneyExchangeRequest->admin_note,
         ]);
 
+        if ($oldStatus !== 'completed') {
+            $this->notifyCustomer($moneyExchangeRequest, true);
+        }
+
         return back()->with('success', 'تم تغيير الحالة إلى مكتمل ✅');
     }
 
     public function reject(Request $request, MoneyExchangeRequest $moneyExchangeRequest)
     {
+        $oldStatus = (string) ($moneyExchangeRequest->status ?? '');
         $data = $request->validate([
             'admin_note' => ['required', 'string', 'max:2000'],
         ]);
@@ -66,7 +74,39 @@ class MoneyExchangeRequestController extends Controller
             'admin_note' => $data['admin_note'],
         ]);
 
+        if ($oldStatus !== 'rejected') {
+            $this->notifyCustomer($moneyExchangeRequest, false);
+        }
+
         return back()->with('success', 'تم رفض الطلب ✅');
+    }
+
+    private function notifyCustomer(MoneyExchangeRequest $req, bool $completed): void
+    {
+        if (! (bool) config('services.wasender.enabled', false)) return;
+        if (! (bool) config('services.wasender.notify_customers', true)) return;
+
+        try { $req->loadMissing(['user', 'user.profile']); } catch (\Throwable $e) {}
+
+        $to = WhatsAppNumber::normalize($req->user?->phone ?? '');
+        if ($to === '') $to = WhatsAppNumber::normalize($req->user?->profile?->phone ?? '');
+        if ($to === '') return;
+
+        $app = (string) config('app.name', 'المتجر');
+        $status = $completed ? 'تم إكمال طلبك ✅' : 'تم رفض طلبك ❌';
+        $dir = $req->direction === 'usdt_to_sar' ? 'USDT → SAR' : 'SAR → USDT';
+        $note = trim((string) ($req->admin_note ?? ''));
+        $noteLine = $note !== '' ? ("\nملاحظة: " . mb_substr($note, 0, 180)) : '';
+
+        $text = trim(
+            "{$app}\n" .
+            "{$status}\n" .
+            "الخدمة: تحويل الأموال ({$dir})\n" .
+            "رقم الطلب: {$req->reference}\n" .
+            $noteLine
+        );
+
+        SendWasenderWhatsAppMessage::dispatch($to, $text)->afterResponse();
     }
 
     public function destroy(Request $request, MoneyExchangeRequest $moneyExchangeRequest)
