@@ -131,6 +131,7 @@ class MoneyExchangeController extends Controller
         return view('website.money_exchange.thanks', [
             'pageTitle' => 'تم استلام طلبك',
             'req' => $req,
+            'settings' => MoneyExchangeSetting::query()->latest('id')->first(),
         ]);
     }
 

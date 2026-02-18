@@ -85,6 +85,83 @@
                     <div class="mt-1 text-xs text-gray-500">يتم احتساب المبلغ تلقائيًا حسب إعدادات الأدمن.</div>
                 </div>
 
+                @php
+                    $hasSarTransferInfo = (string) ($settings->receive_sar_bank_name ?? '') !== ''
+                        || (string) ($settings->receive_sar_account_name ?? '') !== ''
+                        || (string) ($settings->receive_sar_account_number ?? '') !== ''
+                        || (string) ($settings->receive_sar_iban ?? '') !== ''
+                        || (string) ($settings->receive_sar_note ?? '') !== '';
+
+                    $hasUsdtTransferInfo = (string) ($settings->receive_usdt_trc20_address ?? '') !== ''
+                        || (string) ($settings->receive_usdt_binance_id ?? '') !== ''
+                        || (string) ($settings->receive_usdt_note ?? '') !== '';
+                @endphp
+                <div class="rounded-2xl border border-gray-200 bg-white p-4">
+                    <div class="text-sm font-extrabold text-gray-900 mb-2">معلومات التحويل</div>
+
+                    <div id="sarTransferInfo" class="space-y-2">
+                        <div class="text-xs font-extrabold text-gray-700">أرسل مبلغ SAR إلى بيانات الإدارة التالية:</div>
+                        @if(!$hasSarTransferInfo)
+                            <div class="text-sm text-gray-600">لم يتم تحديد بيانات التحويل بعد. تواصل مع الدعم.</div>
+                        @else
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                @if(($settings->receive_sar_bank_name ?? '') !== '')
+                                    <div>
+                                        <div class="text-[11px] text-gray-500">اسم البنك</div>
+                                        <div class="mt-0.5 font-mono font-extrabold text-gray-900 select-all">{{ $settings->receive_sar_bank_name }}</div>
+                                    </div>
+                                @endif
+                                @if(($settings->receive_sar_account_name ?? '') !== '')
+                                    <div>
+                                        <div class="text-[11px] text-gray-500">اسم صاحب الحساب</div>
+                                        <div class="mt-0.5 font-mono font-extrabold text-gray-900 select-all">{{ $settings->receive_sar_account_name }}</div>
+                                    </div>
+                                @endif
+                                @if(($settings->receive_sar_account_number ?? '') !== '')
+                                    <div>
+                                        <div class="text-[11px] text-gray-500">رقم الحساب</div>
+                                        <div class="mt-0.5 font-mono font-extrabold text-gray-900 select-all">{{ $settings->receive_sar_account_number }}</div>
+                                    </div>
+                                @endif
+                                @if(($settings->receive_sar_iban ?? '') !== '')
+                                    <div>
+                                        <div class="text-[11px] text-gray-500">IBAN</div>
+                                        <div class="mt-0.5 font-mono font-extrabold text-gray-900 select-all">{{ $settings->receive_sar_iban }}</div>
+                                    </div>
+                                @endif
+                            </div>
+                            @if(($settings->receive_sar_note ?? '') !== '')
+                                <div class="text-xs text-gray-600">{{ $settings->receive_sar_note }}</div>
+                            @endif
+                        @endif
+                    </div>
+
+                    <div id="usdtTransferInfo" class="space-y-2 hidden">
+                        <div class="text-xs font-extrabold text-gray-700">أرسل مبلغ USDT إلى بيانات الإدارة التالية:</div>
+                        @if(!$hasUsdtTransferInfo)
+                            <div class="text-sm text-gray-600">لم يتم تحديد بيانات التحويل بعد. تواصل مع الدعم.</div>
+                        @else
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                @if(($settings->receive_usdt_trc20_address ?? '') !== '')
+                                    <div class="sm:col-span-2">
+                                        <div class="text-[11px] text-gray-500">عنوان TRC20 (USDT)</div>
+                                        <div class="mt-0.5 font-mono font-extrabold text-gray-900 select-all break-all">{{ $settings->receive_usdt_trc20_address }}</div>
+                                    </div>
+                                @endif
+                                @if(($settings->receive_usdt_binance_id ?? '') !== '')
+                                    <div>
+                                        <div class="text-[11px] text-gray-500">Binance ID</div>
+                                        <div class="mt-0.5 font-mono font-extrabold text-gray-900 select-all">{{ $settings->receive_usdt_binance_id }}</div>
+                                    </div>
+                                @endif
+                            </div>
+                            @if(($settings->receive_usdt_note ?? '') !== '')
+                                <div class="text-xs text-gray-600">{{ $settings->receive_usdt_note }}</div>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+
                 <div id="sarToUsdtFields" class="rounded-2xl border border-gray-200 bg-white p-4">
                     <div class="text-sm font-extrabold text-gray-900 mb-2">بيانات الاستلام (USDT)</div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -158,6 +235,8 @@
     const receive = document.getElementById('receivePreview');
     const sarToUsdt = document.getElementById('sarToUsdtFields');
     const usdtToSar = document.getElementById('usdtToSarFields');
+    const sarTransferInfo = document.getElementById('sarTransferInfo');
+    const usdtTransferInfo = document.getElementById('usdtTransferInfo');
     const sarPerUsdt = parseFloat(document.getElementById('sarPerUsdt')?.value || '0');
     const usdtToSarRate = parseFloat(document.getElementById('usdtToSarRate')?.value || '0');
 
@@ -167,6 +246,8 @@
       const d = getDir();
       if (sarToUsdt) sarToUsdt.classList.toggle('hidden', d !== 'sar_to_usdt');
       if (usdtToSar) usdtToSar.classList.toggle('hidden', d !== 'usdt_to_sar');
+      if (sarTransferInfo) sarTransferInfo.classList.toggle('hidden', d !== 'sar_to_usdt');
+      if (usdtTransferInfo) usdtTransferInfo.classList.toggle('hidden', d !== 'usdt_to_sar');
     };
 
     const render = () => {

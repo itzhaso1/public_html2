@@ -68,10 +68,63 @@
                     <input type="number" step="0.0001" name="max_usdt" value="{{ old('max_usdt', $settings->max_usdt) }}" class="form-control">
                 </div>
 
+                <div class="col-12">
+                    <hr class="my-2">
+                    <div class="fw-bold">معلومات التحويل للعميل</div>
+                    <div class="form-text">هذه البيانات ستظهر للعميل في صفحة "تحويل الأموال" حسب نوع التحويل.</div>
+                </div>
+
+                <div class="col-12">
+                    <div class="fw-bold mb-2">1) العميل يرسل SAR (ريال → USDT)</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">اسم البنك</label>
+                    <input type="text" name="receive_sar_bank_name" value="{{ old('receive_sar_bank_name', $settings->receive_sar_bank_name) }}" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">اسم صاحب الحساب</label>
+                    <input type="text" name="receive_sar_account_name" value="{{ old('receive_sar_account_name', $settings->receive_sar_account_name) }}" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">رقم الحساب</label>
+                    <input type="text" name="receive_sar_account_number" value="{{ old('receive_sar_account_number', $settings->receive_sar_account_number) }}" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">IBAN</label>
+                    <input type="text" name="receive_sar_iban" value="{{ old('receive_sar_iban', $settings->receive_sar_iban) }}" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold">ملاحظة (اختياري)</label>
+                    <textarea name="receive_sar_note" class="form-control" rows="2">{{ old('receive_sar_note', $settings->receive_sar_note) }}</textarea>
+                </div>
+
+                <div class="col-12">
+                    <div class="fw-bold mb-2">2) العميل يرسل USDT (USDT → ريال)</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">عنوان TRC20 (USDT)</label>
+                    <input type="text" name="receive_usdt_trc20_address" value="{{ old('receive_usdt_trc20_address', $settings->receive_usdt_trc20_address) }}" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Binance ID (اختياري)</label>
+                    <input type="text" name="receive_usdt_binance_id" value="{{ old('receive_usdt_binance_id', $settings->receive_usdt_binance_id) }}" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold">ملاحظة (اختياري)</label>
+                    <textarea name="receive_usdt_note" class="form-control" rows="2">{{ old('receive_usdt_note', $settings->receive_usdt_note) }}</textarea>
+                </div>
+
                 <div class="col-12 d-flex gap-2">
                     <button class="btn btn-primary">حفظ</button>
                 </div>
             </form>
+
+            <hr class="my-4">
+
+            <div class="alert alert-info mb-0">
+                <div class="fw-bold mb-1">ملاحظة</div>
+                <div>معلومات التحويل (حساب البنك / عنوان TRC20) تُعرض للعميل داخل صفحة "تحويل الأموال" حسب نوع التحويل.</div>
+            </div>
         </div>
     </div>
 @endsection
