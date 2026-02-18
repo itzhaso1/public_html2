@@ -47,6 +47,7 @@ return [
         'base_url' => env('WASENDER_BASE_URL', 'https://www.wasenderapi.com/api'),
         'api_key' => env('WASENDER_API_KEY'),
         'notify_to' => array_values(array_filter(array_map('trim', explode(',', (string) env('WASENDER_NOTIFY_TO', ''))))),
+        'notify_customers' => env('WASENDER_NOTIFY_CUSTOMERS', true),
     ],
 
 ];

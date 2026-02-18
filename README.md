@@ -53,6 +53,7 @@ Set these environment variables in your `.env` (do **not** commit them):
 - `WASENDER_ENABLED=true`
 - `WASENDER_API_KEY=YOUR_TOKEN_HERE`
 - `WASENDER_NOTIFY_TO=9665XXXXXXXX,9627XXXXXXXX` (comma-separated phone numbers, digits only is preferred)
+- `WASENDER_NOTIFY_CUSTOMERS=true` (optional, default: true)
 - (optional) `WASENDER_BASE_URL=https://www.wasenderapi.com/api`
 
 

@@ -6,25 +6,37 @@ use App\Jobs\SendWasenderWhatsAppMessage;
 use App\Models\CashExchangeRequest;
 use App\Models\ManualPaymentRequest;
 use App\Models\MoneyExchangeRequest;
+use App\Support\WhatsApp\WhatsAppNumber;
 use Illuminate\Database\Eloquent\Model;
 
 class NewDashboardRequestWhatsAppObserver
 {
     public function created(Model $model): void
     {
+        // Ensure user phone is available for customer notifications
+        try {
+            if (method_exists($model, 'loadMissing')) {
+                $model->loadMissing(['user.profile']);
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
         $recipients = $this->recipients();
-        if (empty($recipients)) {
-            return;
+        $adminText = $this->buildAdminMessage($model);
+        if ($adminText !== '' && !empty($recipients)) {
+            foreach ($recipients as $to) {
+                // After-response so we don't slow down the customer request.
+                SendWasenderWhatsAppMessage::dispatch($to, $adminText)->afterResponse();
+            }
         }
 
-        $text = $this->buildMessage($model);
-        if ($text === '') {
-            return;
-        }
-
-        foreach ($recipients as $to) {
-            // After-response so we don't slow down the customer request.
-            SendWasenderWhatsAppMessage::dispatch($to, $text)->afterResponse();
+        if ((bool) config('services.wasender.notify_customers', true)) {
+            $customerTo = $this->customerNumber($model);
+            $customerText = $this->buildCustomerMessage($model);
+            if ($customerTo !== '' && $customerText !== '') {
+                SendWasenderWhatsAppMessage::dispatch($customerTo, $customerText)->afterResponse();
+            }
         }
     }
 
@@ -45,7 +57,7 @@ class NewDashboardRequestWhatsAppObserver
         return array_values(array_unique($out));
     }
 
-    private function buildMessage(Model $model): string
+    private function buildAdminMessage(Model $model): string
     {
         if ($model instanceof ManualPaymentRequest) {
             $url = $this->safeRoute('admin.manual_payments.show', $model->id);
@@ -84,6 +96,73 @@ class NewDashboardRequestWhatsAppObserver
                 "إلى: {$model->amount_to}\n" .
                 "الحالة: {$model->status}\n" .
                 ($url ? "رابط الداشبورد: {$url}\n" : '')
+            );
+        }
+
+        return '';
+    }
+
+    private function customerNumber(Model $model): string
+    {
+        // Prefer explicit contact_phone (if ever used), then user phone, then user profile phone.
+        $contact = method_exists($model, 'getAttribute') ? (string) ($model->getAttribute('contact_phone') ?? '') : '';
+        $contact = WhatsAppNumber::normalize($contact);
+        if ($contact !== '') return $contact;
+
+        $user = method_exists($model, 'user') ? $model->user : null;
+        if (!$user && method_exists($model, 'getAttribute')) {
+            $user = $model->getAttribute('user');
+        }
+
+        $uPhone = WhatsAppNumber::normalize($user?->phone ?? '');
+        if ($uPhone !== '') return $uPhone;
+
+        try {
+            $profilePhone = WhatsAppNumber::normalize($user?->profile?->phone ?? '');
+            return $profilePhone;
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
+
+    private function buildCustomerMessage(Model $model): string
+    {
+        $app = (string) config('app.name', 'المتجر');
+        $base = rtrim((string) config('app.url', ''), '/');
+
+        if ($model instanceof ManualPaymentRequest) {
+            $link = $base ? ($base . '/ar/diamonds/manual-payment/thanks/' . $model->reference) : null;
+            return trim(
+                "{$app}\n" .
+                "تم استلام طلبك ✅\n" .
+                "رقم الطلب: {$model->reference}\n" .
+                "الحالة: قيد المراجعة\n" .
+                ($link ? "تفاصيل الطلب: {$link}\n" : '')
+            );
+        }
+
+        if ($model instanceof CashExchangeRequest) {
+            $link = $base ? ($base . '/ar/cash-exchange/requests/' . $model->reference) : null;
+            return trim(
+                "{$app}\n" .
+                "تم استلام طلبك ✅\n" .
+                "الخدمة: استبدال رصيدك كاش\n" .
+                "رقم الطلب: {$model->reference}\n" .
+                "الحالة: قيد المراجعة\n" .
+                ($link ? "تفاصيل الطلب: {$link}\n" : '')
+            );
+        }
+
+        if ($model instanceof MoneyExchangeRequest) {
+            $link = $base ? ($base . '/ar/customer/money-exchange/' . $model->reference) : null;
+            $dirLabel = ($model->direction ?? '') === 'usdt_to_sar' ? 'USDT → SAR' : 'SAR → USDT';
+            return trim(
+                "{$app}\n" .
+                "تم استلام طلبك ✅\n" .
+                "الخدمة: تحويل الأموال ({$dirLabel})\n" .
+                "رقم الطلب: {$model->reference}\n" .
+                "الحالة: معلق\n" .
+                ($link ? "تفاصيل الطلب: {$link}\n" : '')
             );
         }
 
