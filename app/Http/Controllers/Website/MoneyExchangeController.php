@@ -7,6 +7,7 @@ use App\Models\MoneyExchangeRequest;
 use App\Models\MoneyExchangeSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Support\WhatsApp\WhatsAppNumber;
 
 class MoneyExchangeController extends Controller
 {
@@ -40,6 +41,7 @@ class MoneyExchangeController extends Controller
         $data = $request->validate([
             'direction' => ['required', 'in:sar_to_usdt,usdt_to_sar'],
             'amount' => ['required', 'numeric', 'gt:0'],
+            'contact_phone' => ['nullable', 'string', 'min:8', 'max:32'],
 
             // SAR -> USDT destination
             'destination_type' => ['nullable', 'in:trc20,binance_id,email'],
@@ -51,6 +53,18 @@ class MoneyExchangeController extends Controller
             'account_number' => ['nullable', 'string', 'max:190'],
             'iban' => ['nullable', 'string', 'max:190'],
         ]);
+
+        $existingPhone = WhatsAppNumber::normalize($request->user()?->phone ?? '')
+            ?: WhatsAppNumber::normalize($request->user()?->profile?->phone ?? '');
+        $contactPhone = WhatsAppNumber::normalize($data['contact_phone'] ?? '');
+        if ($existingPhone === '' && $contactPhone === '') {
+            return back()->withErrors(['contact_phone' => 'رقم الواتساب مطلوب لاستلام إشعار الطلب.'])->withInput();
+        }
+        if ($existingPhone === '' && $contactPhone !== '' && $request->user()) {
+            try {
+                $request->user()->update(['phone' => $contactPhone]);
+            } catch (\Throwable $e) {}
+        }
 
         $direction = (string) $data['direction'];
         $amount = (float) $data['amount'];

@@ -7,6 +7,7 @@ use App\Models\CashExchangeOffer;
 use App\Models\CashExchangeRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Support\WhatsApp\WhatsAppNumber;
 
 class CashExchangeController extends Controller
 {
@@ -33,7 +34,20 @@ class CashExchangeController extends Controller
             'account_name' => ['required', 'string', 'max:190'],
             'account_number' => ['nullable', 'string', 'max:190'],
             'iban' => ['nullable', 'string', 'max:190'],
+            'contact_phone' => ['nullable', 'string', 'min:8', 'max:32'],
         ]);
+
+        $existingPhone = WhatsAppNumber::normalize($request->user()?->phone ?? '')
+            ?: WhatsAppNumber::normalize($request->user()?->profile?->phone ?? '');
+        $contactPhone = WhatsAppNumber::normalize($data['contact_phone'] ?? '');
+        if ($existingPhone === '' && $contactPhone === '') {
+            return back()->withErrors(['contact_phone' => 'رقم الواتساب مطلوب لاستلام إشعار الطلب.'])->withInput();
+        }
+        if ($existingPhone === '' && $contactPhone !== '' && $request->user()) {
+            try {
+                $request->user()->update(['phone' => $contactPhone]);
+            } catch (\Throwable $e) {}
+        }
 
         if (empty($data['account_number']) && empty($data['iban'])) {
             return back()->withErrors(['iban' => 'ضع رقم الحساب أو IBAN.'])->withInput();

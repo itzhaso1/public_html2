@@ -52,6 +52,20 @@
             <form method="POST" action="{{ route('website.money_exchange.store') }}" class="space-y-4">
                 @csrf
 
+                @php
+                    $userPhone = preg_replace('/\D+/', '', (string) (auth()->user()?->phone ?? auth()->user()?->profile?->phone ?? ''));
+                    $phoneRequired = $userPhone === '';
+                @endphp
+                <div>
+                    <label class="block text-sm font-extrabold text-gray-900 mb-2">رقم واتساب لاستلام إشعار الطلب</label>
+                    <input type="tel" name="contact_phone" value="{{ old('contact_phone', $userPhone) }}"
+                           class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/30"
+                           placeholder="مثال: 9665XXXXXXXX"
+                           {{ $phoneRequired ? 'required' : '' }}>
+                    <div class="mt-1 text-xs text-gray-500">اكتب الرقم الدولي بدون + وبدون مسافات.</div>
+                    @error('contact_phone')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <label class="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm cursor-pointer">
                         <div class="flex items-center gap-2">

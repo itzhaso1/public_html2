@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Services\Integrations\Shop2TopUp\Shop2TopUpService;
 use Illuminate\Http\JsonResponse;
+use App\Support\WhatsApp\WhatsAppNumber;
 
 class ManualPaymentController extends Controller
 {
@@ -113,7 +114,23 @@ class ManualPaymentController extends Controller
             $rules['player_id'] = ['required', 'string', 'max:64'];
         }
 
+        $existingPhone = WhatsAppNumber::normalize($request->user()?->phone ?? '')
+            ?: WhatsAppNumber::normalize($request->user()?->profile?->phone ?? '');
+        // If no phone saved on account, require it so WhatsApp confirmation can be sent.
+        $rules['contact_phone'] = $existingPhone === ''
+            ? ['required', 'string', 'min:8', 'max:32']
+            : ['nullable', 'string', 'min:8', 'max:32'];
+
         $data = $request->validate($rules);
+
+        $contactPhone = WhatsAppNumber::normalize($data['contact_phone'] ?? '');
+        if ($contactPhone !== '' && $existingPhone === '' && $request->user()) {
+            try {
+                $request->user()->update(['phone' => $contactPhone]);
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
 
         try {
             Storage::disk('public')->makeDirectory('manual-payments');
@@ -141,7 +158,7 @@ class ManualPaymentController extends Controller
             'user_id' => Auth::id(),
             // `player_id` is required for gems and not required for codes.
             'player_id' => $data['player_id'] ?? '-',
-            'contact_phone' => null,
+            'contact_phone' => $contactPhone !== '' ? $contactPhone : null,
             'contact_email' => null,
             'amount' => (float) $product->price,
             'currency' => 'SAR',

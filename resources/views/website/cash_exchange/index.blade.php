@@ -49,6 +49,20 @@
         <form method="POST" action="{{ route('website.cash_exchange.store') }}" class="space-y-4">
             @csrf
 
+            @php
+                $userPhone = preg_replace('/\D+/', '', (string) (auth()->user()?->phone ?? auth()->user()?->profile?->phone ?? ''));
+                $phoneRequired = $userPhone === '';
+            @endphp
+            <div>
+                <label class="block text-sm font-extrabold text-gray-900 mb-2">رقم واتساب لاستلام إشعار الطلب</label>
+                <input type="tel" name="contact_phone" value="{{ old('contact_phone', $userPhone) }}"
+                       class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500/30"
+                       placeholder="مثال: 9627XXXXXXXX"
+                       {{ $phoneRequired ? 'required' : '' }}>
+                <div class="mt-1 text-xs text-gray-500">اكتب الرقم الدولي بدون + وبدون مسافات.</div>
+                @error('contact_phone')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+            </div>
+
             <div>
                 <label class="block text-sm font-extrabold text-gray-900 mb-2">فئة الرصيد</label>
                 <select id="offerSelect" name="offer_id"

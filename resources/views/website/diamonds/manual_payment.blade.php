@@ -12,6 +12,8 @@
     $allowedCharge = collect($allowedChargeMethodKeys ?? config('bank.charge_method_keys', []))->values()->all();
     $methodKeys = $isCodes ? $enabledMethods->keys()->all() : array_values(array_intersect($enabledMethods->keys()->all(), $allowedCharge));
     $selectedMethod = old('payment_method') ?: ($methodKeys[0] ?? null);
+    $userPhone = preg_replace('/\D+/', '', (string) (auth()->user()?->phone ?? auth()->user()?->profile?->phone ?? ''));
+    $phoneRequired = $userPhone === '';
 @endphp
 
 @include('website.diamonds.partials.header', [
@@ -230,6 +232,16 @@
                         @error('player_id')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                     </div>
                 @endunless
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-1">رقم واتساب لاستلام إشعار الطلب</label>
+                    <input type="tel" name="contact_phone" value="{{ old('contact_phone', $userPhone) }}"
+                           class="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-yellow-400/60"
+                           placeholder="مثال: 9665XXXXXXXX"
+                           {{ $phoneRequired ? 'required' : '' }}>
+                    <div class="text-xs text-gray-500 mt-1">اكتب الرقم الدولي بدون + وبدون مسافات.</div>
+                    @error('contact_phone')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                </div>
 
                 <div>
                     <label class="block text-sm font-bold text-gray-800 mb-1">إيصال التحويل</label>

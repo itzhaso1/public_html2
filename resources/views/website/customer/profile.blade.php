@@ -38,6 +38,15 @@
                     @error('email')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
                 </div>
 
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-1">رقم واتساب (لإشعارات الطلبات)</label>
+                    <input type="tel" name="phone" value="{{ old('phone', preg_replace('/\\D+/', '', (string) ($user->phone ?? $user->profile?->phone ?? ''))) }}"
+                           class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400/60"
+                           placeholder="مثال: 9665XXXXXXXX">
+                    <div class="text-xs text-gray-500 mt-1">اكتب الرقم الدولي بدون + وبدون مسافات.</div>
+                    @error('phone')<div class="text-xs text-red-600 mt-1">{{ $message }}</div>@enderror
+                </div>
+
                 <button type="submit"
                         class="w-full rounded-xl bg-black px-5 py-3 text-sm font-extrabold text-white hover:bg-gray-800 transition">
                     حفظ البريد
