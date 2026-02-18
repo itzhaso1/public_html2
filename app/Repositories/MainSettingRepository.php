@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Session};
 use App\Models\Concerns\UploadMedia2;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use App\DataTables\Dashboard\History\HistoryDataTable;
 
 class MainSettingRepository implements MainSettingInterface
@@ -43,8 +44,15 @@ class MainSettingRepository implements MainSettingInterface
 
     public function save(MainSettingRequest $request) {
         try {
+            $hasHomeQuick = false;
+            try {
+                $hasHomeQuick = Schema::hasColumn('settings', 'home_quick_charge_title');
+            } catch (\Throwable $e) {
+                $hasHomeQuick = false;
+            }
+
             $setting = Setting::firstOrNew([]);
-            $setting->fill($request->only([
+            $fields = [
                 'email',
                 'name',
                 'description',
@@ -54,33 +62,46 @@ class MainSettingRepository implements MainSettingInterface
                 'loyalty_points',
                 'delivery_fees',
                 'version',
-                'home_quick_charge_title',
-                'home_quick_codes_title',
-                'home_quick_cash_exchange_title',
-                'home_quick_money_exchange_title',
-            ]));
+            ];
+
+            if ($hasHomeQuick) {
+                $fields = array_merge($fields, [
+                    'home_quick_charge_title',
+                    'home_quick_codes_title',
+                    'home_quick_cash_exchange_title',
+                    'home_quick_money_exchange_title',
+                ]);
+            }
+
+            $setting->fill($request->only($fields));
             $setting->save();
             if ($request->hasFile('logo'))
                 $setting->updateSingleMedia('setting', $request->file('logo'), $setting, null, 'media', true, false, 'logo');
             if ($request->hasFile('favicon'))
                 $setting->updateSingleMedia('setting', $request->file('favicon'), $setting, null, 'media', true, false, 'favicon');
 
-            if ($request->hasFile('home_quick_charge_image')) {
-                $setting->updateSingleMedia('setting', $request->file('home_quick_charge_image'), $setting, null, 'media', true, false, 'home_quick_charge');
-            }
-            if ($request->hasFile('home_quick_codes_image')) {
-                $setting->updateSingleMedia('setting', $request->file('home_quick_codes_image'), $setting, null, 'media', true, false, 'home_quick_codes');
-            }
-            if ($request->hasFile('home_quick_cash_exchange_image')) {
-                $setting->updateSingleMedia('setting', $request->file('home_quick_cash_exchange_image'), $setting, null, 'media', true, false, 'home_quick_cash_exchange');
-            }
-            if ($request->hasFile('home_quick_money_exchange_image')) {
-                $setting->updateSingleMedia('setting', $request->file('home_quick_money_exchange_image'), $setting, null, 'media', true, false, 'home_quick_money_exchange');
+            if ($hasHomeQuick) {
+                if ($request->hasFile('home_quick_charge_image')) {
+                    $setting->updateSingleMedia('setting', $request->file('home_quick_charge_image'), $setting, null, 'media', true, false, 'home_quick_charge');
+                }
+                if ($request->hasFile('home_quick_codes_image')) {
+                    $setting->updateSingleMedia('setting', $request->file('home_quick_codes_image'), $setting, null, 'media', true, false, 'home_quick_codes');
+                }
+                if ($request->hasFile('home_quick_cash_exchange_image')) {
+                    $setting->updateSingleMedia('setting', $request->file('home_quick_cash_exchange_image'), $setting, null, 'media', true, false, 'home_quick_cash_exchange');
+                }
+                if ($request->hasFile('home_quick_money_exchange_image')) {
+                    $setting->updateSingleMedia('setting', $request->file('home_quick_money_exchange_image'), $setting, null, 'media', true, false, 'home_quick_money_exchange');
+                }
             }
 
             Cache::forget('app_settings');
 
-            return redirect()->back()->with('success', 'تم تحديث الإعدادات بنجاح.');
+            $msg = 'تم تحديث الإعدادات بنجاح.';
+            if (! $hasHomeQuick) {
+                $msg .= ' (لتفعيل تعديل كروت الصفحة الرئيسية شغّل: php artisan migrate --force)';
+            }
+            return redirect()->back()->with('success', $msg);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'حدث خطأ أثناء التحديث: ' . $e->getMessage());
         }
