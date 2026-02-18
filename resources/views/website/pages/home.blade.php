@@ -185,6 +185,34 @@
             </div>
         </a>
 
+        <!-- تحويل الأموال / تبادل العملات -->
+        <a href="{{ route('website.money_exchange.index') }}"
+           class="group relative overflow-hidden rounded-2xl border border-purple-200 bg-gradient-to-l from-purple-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
+            <div class="p-2.5 sm:p-4">
+                <div class="flex items-center justify-center">
+                    <div class="w-full h-24 sm:h-32 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-700 text-4xl font-extrabold">
+                        💱
+                    </div>
+                </div>
+
+                <div class="mt-2 text-center">
+                    <span class="inline-block text-xs text-gray-500">القسم</span>
+                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">تحويل الأموال</h3>
+                </div>
+
+                <p class="text-[11px] sm:text-sm text-gray-600 mt-2 text-center leading-relaxed">
+                    تحويل SAR ↔ USDT حسب سعر الصرف
+                </p>
+
+                <div class="mt-3 flex justify-center">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-purple-500/10 px-3 py-1 text-xs font-bold text-purple-700">
+                        <i class="bi bi-currency-exchange"></i>
+                        دخول القسم
+                    </span>
+                </div>
+            </div>
+        </a>
+
     </div>
 </div>
 
