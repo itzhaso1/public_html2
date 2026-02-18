@@ -12,8 +12,8 @@ use App\Services\Integrations\Shop2TopUp\Shop2TopUpService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\ChargeCompletedNotification;
-use App\Jobs\SendWasenderWhatsAppMessage;
 use App\Support\WhatsApp\WhatsAppNumber;
+use App\Support\WhatsApp\WasenderNotifier;
 
 class ManualPaymentController extends Controller
 {
@@ -418,7 +418,7 @@ class ManualPaymentController extends Controller
             $noteLine
         );
 
-        SendWasenderWhatsAppMessage::dispatch($to, $text)->afterResponse();
+        WasenderNotifier::sendAfterCommit($to, $text);
     }
 
     public function destroy(Request $request, ManualPaymentRequest $manualPaymentRequest)

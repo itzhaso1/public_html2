@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\SendWasenderWhatsAppMessage;
 use App\Models\MoneyExchangeRequest;
 use App\Support\WhatsApp\WhatsAppNumber;
+use App\Support\WhatsApp\WasenderNotifier;
 use Illuminate\Http\Request;
 
 class MoneyExchangeRequestController extends Controller
@@ -106,7 +106,7 @@ class MoneyExchangeRequestController extends Controller
             $noteLine
         );
 
-        SendWasenderWhatsAppMessage::dispatch($to, $text)->afterResponse();
+        WasenderNotifier::sendAfterCommit($to, $text);
     }
 
     public function destroy(Request $request, MoneyExchangeRequest $moneyExchangeRequest)

@@ -2,12 +2,12 @@
 
 namespace App\Observers;
 
-use App\Jobs\SendWasenderWhatsAppMessage;
 use App\Models\CashExchangeRequest;
 use App\Models\ManualPaymentRequest;
 use App\Models\MoneyExchangeRequest;
 use App\Models\Order;
 use App\Support\WhatsApp\WhatsAppNumber;
+use App\Support\WhatsApp\WasenderNotifier;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -218,17 +218,7 @@ class NewDashboardRequestWhatsAppObserver
 
     private function dispatchSafely(string $to, string $text): void
     {
-        try {
-            if (DB::transactionLevel() > 0) {
-                DB::afterCommit(function () use ($to, $text) {
-                    SendWasenderWhatsAppMessage::dispatch($to, $text)->afterResponse();
-                });
-                return;
-            }
-        } catch (\Throwable $e) {
-            // ignore
-        }
-        SendWasenderWhatsAppMessage::dispatch($to, $text)->afterResponse();
+        WasenderNotifier::sendAfterCommit($to, $text);
     }
 }
 

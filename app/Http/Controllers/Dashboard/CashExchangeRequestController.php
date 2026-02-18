@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\SendWasenderWhatsAppMessage;
 use App\Models\CashExchangeRequest;
 use App\Support\WhatsApp\WhatsAppNumber;
+use App\Support\WhatsApp\WasenderNotifier;
 use Illuminate\Http\Request;
 
 class CashExchangeRequestController extends Controller
@@ -151,7 +151,7 @@ class CashExchangeRequestController extends Controller
             $noteLine
         );
 
-        SendWasenderWhatsAppMessage::dispatch($to, $text)->afterResponse();
+        WasenderNotifier::sendAfterCommit($to, $text);
     }
 }
 
