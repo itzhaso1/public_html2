@@ -43,6 +43,10 @@ class MoneyExchangeRequestController extends Controller
 
     public function complete(Request $request, MoneyExchangeRequest $moneyExchangeRequest)
     {
+        if ((string) ($moneyExchangeRequest->status ?? '') !== 'pending') {
+            return back()->withErrors(['error' => 'لا يمكن تنفيذ هذا الإجراء لأن الطلب ليس معلقاً.']);
+        }
+
         $oldStatus = (string) ($moneyExchangeRequest->status ?? '');
         $data = $request->validate([
             'admin_note' => ['nullable', 'string', 'max:2000'],
@@ -63,6 +67,10 @@ class MoneyExchangeRequestController extends Controller
 
     public function reject(Request $request, MoneyExchangeRequest $moneyExchangeRequest)
     {
+        if ((string) ($moneyExchangeRequest->status ?? '') !== 'pending') {
+            return back()->withErrors(['error' => 'لا يمكن تنفيذ هذا الإجراء لأن الطلب ليس معلقاً.']);
+        }
+
         $oldStatus = (string) ($moneyExchangeRequest->status ?? '');
         $data = $request->validate([
             'admin_note' => ['required', 'string', 'max:2000'],

@@ -79,14 +79,14 @@
                       onsubmit="return confirm('تأكيد تغيير الحالة إلى مكتمل؟');">
                     @csrf
                     <input type="text" name="admin_note" class="form-control mb-2" placeholder="ملاحظة (اختياري)" value="{{ old('admin_note', $req->admin_note) }}">
-                    <button class="btn btn-success btn-sm" {{ $req->status === 'completed' ? 'disabled' : '' }}>مكتمل</button>
+                    <button class="btn btn-success btn-sm" {{ ($req->status ?? 'pending') !== 'pending' ? 'disabled' : '' }}>مكتمل</button>
                 </form>
 
                 <form method="POST" action="{{ route('admin.money_exchange.requests.reject', $req) }}" class="d-inline-block"
                       onsubmit="return confirm('تأكيد رفض الطلب؟');">
                     @csrf
                     <input type="text" name="admin_note" class="form-control mb-2" placeholder="سبب الرفض (مطلوب)" value="{{ old('admin_note') }}">
-                    <button class="btn btn-danger btn-sm" {{ $req->status === 'rejected' ? 'disabled' : '' }}>رفض</button>
+                    <button class="btn btn-danger btn-sm" {{ ($req->status ?? 'pending') !== 'pending' ? 'disabled' : '' }}>رفض</button>
                 </form>
             </div>
         </div>

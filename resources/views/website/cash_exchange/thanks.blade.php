@@ -5,12 +5,17 @@
 @endsection
 
 @section('content')
+@php
+    $status = (string) ($req->status ?? 'pending');
+    $statusLabel = $status === 'completed' ? 'مكتمل' : 'قيد المراجعة';
+    $statusClass = $status === 'completed' ? 'text-green-700' : 'text-yellow-700';
+@endphp
 <section class="max-w-3xl mx-auto px-4 pt-6 pb-12" dir="rtl">
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div class="text-center">
             <div class="text-4xl">✅</div>
             <h2 class="mt-2 text-2xl font-extrabold text-gray-900">تم استلام طلب الاستبدال</h2>
-            <p class="mt-1 text-sm text-gray-600">طلبك قيد المراجعة وسيتم التحويل بعد التأكيد.</p>
+            <p class="mt-1 text-sm text-gray-600">طلبك {{ $statusLabel }} وسيتم التعامل معه من الإدارة.</p>
         </div>
 
         <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -20,7 +25,7 @@
             </div>
             <div class="rounded-2xl bg-gray-50 border border-gray-100 p-4">
                 <div class="text-xs text-gray-500">الحالة</div>
-                <div class="mt-1 font-extrabold text-yellow-700">قيد المراجعة</div>
+                <div class="mt-1 font-extrabold {{ $statusClass }}">{{ $statusLabel }}</div>
             </div>
             <div class="rounded-2xl bg-gray-50 border border-gray-100 p-4">
                 <div class="text-xs text-gray-500">الفئة</div>

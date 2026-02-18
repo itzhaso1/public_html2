@@ -43,6 +43,10 @@ class CashExchangeRequestController extends Controller
 
     public function complete(Request $request, CashExchangeRequest $cashExchangeRequest)
     {
+        if ((string) ($cashExchangeRequest->status ?? '') !== 'pending') {
+            return back()->withErrors(['error' => 'لا يمكن تنفيذ هذا الإجراء لأن الطلب ليس قيد المراجعة.']);
+        }
+
         $oldStatus = (string) ($cashExchangeRequest->status ?? '');
         $data = $request->validate([
             'admin_note' => ['nullable', 'string', 'max:2000'],

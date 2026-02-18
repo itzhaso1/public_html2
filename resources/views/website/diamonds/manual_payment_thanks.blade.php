@@ -11,11 +11,28 @@
     $methods = (array) config('bank.methods', []);
     $methodKey = $mpr->payment_method ?? null;
     $method = $methodKey && isset($methods[$methodKey]) ? $methods[$methodKey] : null;
+
+    $status = (string) ($mpr->status ?? 'pending');
+    $statusLabel = match ($status) {
+        'approved' => 'مقبول',
+        'rejected' => 'مرفوض',
+        default => 'قيد المراجعة',
+    };
+    $statusClass = match ($status) {
+        'approved' => 'text-green-700',
+        'rejected' => 'text-red-700',
+        default => 'text-yellow-700',
+    };
+    $subtitle = match ($status) {
+        'approved' => 'تمت الموافقة على طلبك وسيتم التنفيذ/التسليم حسب نوع الخدمة.',
+        'rejected' => 'تم رفض طلبك. إذا كان لديك استفسار تواصل مع الدعم.',
+        default => 'طلبك قيد المراجعة وسيتم تنفيذ الشحن بعد التأكيد.',
+    };
 @endphp
 
 @include('website.diamonds.partials.header', [
     'title' => 'تم استلام طلبك',
-    'subtitle' => 'طلبك قيد المراجعة وسيتم تنفيذ الشحن بعد التأكيد.',
+    'subtitle' => $subtitle,
     'active' => $isCodes ? 'codes' : 'charge',
 ])
 
@@ -34,7 +51,7 @@
             </div>
             <div class="rounded-2xl bg-gray-50 border border-gray-100 p-4">
                 <div class="text-xs text-gray-500">الحالة</div>
-                <div class="mt-1 font-extrabold text-yellow-700">قيد المراجعة</div>
+                <div class="mt-1 font-extrabold {{ $statusClass }}">{{ $statusLabel }}</div>
             </div>
             <div class="rounded-2xl bg-gray-50 border border-gray-100 p-4">
                 <div class="text-xs text-gray-500">الباقة</div>

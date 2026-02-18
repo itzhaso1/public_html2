@@ -81,6 +81,8 @@
                         <input type="hidden" name="admin_note" value="{{ $req->admin_note }}">
                         <button class="btn btn-sm btn-success">تغيير الحالة إلى مكتمل</button>
                     </form>
+                @else
+                    <div class="text-muted">تم إكمال الطلب ولا يمكن تغييره مرة أخرى.</div>
                 @endif
             </div>
         </div>

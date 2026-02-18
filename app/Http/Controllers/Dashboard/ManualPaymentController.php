@@ -155,6 +155,10 @@ class ManualPaymentController extends Controller
 
     public function approve(Request $request, ManualPaymentRequest $manualPaymentRequest)
     {
+        if ((string) ($manualPaymentRequest->status ?? '') !== 'pending') {
+            return back()->withErrors(['error' => 'لا يمكن تنفيذ هذا الإجراء لأن الطلب ليس قيد المراجعة.']);
+        }
+
         $oldStatus = (string) ($manualPaymentRequest->status ?? '');
         $request->validate([
             'admin_note' => ['nullable', 'string', 'max:2000'],
@@ -363,6 +367,10 @@ class ManualPaymentController extends Controller
 
     public function reject(Request $request, ManualPaymentRequest $manualPaymentRequest)
     {
+        if ((string) ($manualPaymentRequest->status ?? '') !== 'pending') {
+            return back()->withErrors(['error' => 'لا يمكن تنفيذ هذا الإجراء لأن الطلب ليس قيد المراجعة.']);
+        }
+
         $oldStatus = (string) ($manualPaymentRequest->status ?? '');
         $request->validate([
             'admin_note' => ['nullable', 'string', 'max:2000'],

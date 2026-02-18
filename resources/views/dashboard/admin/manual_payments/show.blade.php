@@ -83,11 +83,18 @@
 
             <div class="mt-5">
                 <label class="block text-sm font-extrabold mb-2">ملاحظة الأدمن (اختياري)</label>
+                @if(($mpr->status ?? 'pending') !== 'pending')
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                        هذا الطلب تم {{ ($mpr->status === 'approved') ? 'قبوله' : 'رفضه' }} ولا يمكن تنفيذ قبول/رفض مرة أخرى.
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('admin.manual_payments.approve', $mpr) }}" class="space-y-3">
                     @csrf
                     <textarea name="admin_note" rows="3"
                               class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
-                              placeholder="مثال: تم التأكد من الإيصال وسيتم الشحن الآن...">{{ old('admin_note', $mpr->admin_note) }}</textarea>
+                              placeholder="مثال: تم التأكد من الإيصال وسيتم الشحن الآن..."
+                              {{ ($mpr->status ?? 'pending') !== 'pending' ? 'disabled' : '' }}>{{ old('admin_note', $mpr->admin_note) }}</textarea>
                     @if(($mpr->product?->service_type ?? null) === 'gems')
                         <div>
                             <label class="block text-xs font-bold text-gray-600 mb-1">TRX ID (من Shop2TopUp) - اختياري</label>
@@ -107,7 +114,8 @@
                     <div class="flex flex-col sm:flex-row gap-2">
                         <button type="submit"
                                 onclick="this.disabled=true; this.innerText='...جارِ الإرسال'; this.form.submit();"
-                                class="flex-1 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-green-700 transition">
+                                class="flex-1 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-green-700 transition {{ ($mpr->status ?? 'pending') !== 'pending' ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                {{ ($mpr->status ?? 'pending') !== 'pending' ? 'disabled' : '' }}>
                             موافقة
                         </button>
                 </form>
@@ -115,7 +123,8 @@
                     @csrf
                     <input type="hidden" name="admin_note" value="{{ old('admin_note', $mpr->admin_note) }}">
                     <button type="submit"
-                            class="w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-red-700 transition">
+                            class="w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-red-700 transition {{ ($mpr->status ?? 'pending') !== 'pending' ? 'opacity-50 cursor-not-allowed' : '' }}"
+                            {{ ($mpr->status ?? 'pending') !== 'pending' ? 'disabled' : '' }}>
                         رفض
                     </button>
                 </form>
