@@ -95,6 +95,20 @@ document.addEventListener("DOMContentLoaded", () => {
     return null;
   };
 
+  const detectCountryFromBrowser = () => {
+    try {
+      const lang = String(navigator.language || '').toLowerCase();
+      if (lang.includes('ar-sa') || lang.endsWith('-sa')) return 'SA';
+      if (lang.includes('ar-jo') || lang.endsWith('-jo')) return 'JO';
+    } catch (e) {}
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      if (tz === 'Asia/Riyadh') return 'SA';
+      if (tz === 'Asia/Amman') return 'JO';
+    } catch (e) {}
+    return null;
+  };
+
   // Modal open/close helpers (manual)
   const modal = document.getElementById('countryPickerModal');
   const openModal = () => { if (modal) modal.classList.remove('hidden'); };
@@ -131,22 +145,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (cachedCode) {
       applyCurrency(normalizeCountryToCurrencyCountry(cachedCode));
     } else {
-      const controller = ('AbortController' in window) ? new AbortController() : null;
-      const timer = setTimeout(() => { try { controller && controller.abort(); } catch (e) {} }, 1800);
-
-      fetch("https://ipwho.is/?fields=country_code", controller ? { signal: controller.signal } : undefined)
-        .then(r => r.json())
-        .then(data => {
-          const detected = normalizeCountryToCurrencyCountry(data && data.country_code);
-          writeCachedCountry(detected);
-          applyCurrency(detected);
-        })
-        .catch(() => {
-          const fallback = 'US';
-          writeCachedCountry(fallback);
-          applyCurrency(fallback);
-        })
-        .finally(() => clearTimeout(timer));
+      const guessed = detectCountryFromBrowser();
+      const detected = normalizeCountryToCurrencyCountry(guessed);
+      writeCachedCountry(detected);
+      applyCurrency(detected);
     }
   }
 });
@@ -219,53 +221,91 @@ document.addEventListener('DOMContentLoaded', () => {
 
     <!-- سكربت الشارات -->
     <script>
-        document.querySelectorAll('.product').forEach(p => {
-    const status = p.dataset.status;
-    const discount = p.dataset.discount;
-    if (status === "مباع") {
-        const badge = document.createElement('div');
-        badge.className = "badge badge-sold";
-        badge.textContent = "مباع";
-        p.prepend(badge);
-        const btn = p.querySelector('button');
-        btn.disabled = true;
-        btn.classList.add("bg-gray-400", "cursor-not-allowed");
-        btn.textContent = "مباع";
-    }
-    if (discount && !status) {
-        const badge = document.createElement('div');
-        badge.className = "badge badge-sale";
-        badge.textContent = `خصم ${discount}%`;
-        p.prepend(badge);
-        const priceEl = p.querySelector('[data-base-price]');
-        const base = parseFloat(priceEl.getAttribute('data-base-price'));
-        const newPrice = base - (base * (discount / 100));
-        priceEl.textContent = `ر.س ${newPrice.toFixed(2)} (بدلاً من ${base})`;
-    }
-    });
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.product').forEach(p => {
+                const status = p.dataset.status;
+                const discount = p.dataset.discount;
+
+                if (status === "مباع") {
+                    const badge = document.createElement('div');
+                    badge.className = "badge badge-sold";
+                    badge.textContent = "مباع";
+                    p.prepend(badge);
+                    const btn = p.querySelector('button');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.classList.add("bg-gray-400", "cursor-not-allowed");
+                        btn.textContent = "مباع";
+                    }
+                }
+
+                if (discount && !status) {
+                    const badge = document.createElement('div');
+                    badge.className = "badge badge-sale";
+                    badge.textContent = `خصم ${discount}%`;
+                    p.prepend(badge);
+
+                    const priceEl = p.querySelector('[data-base-price]');
+                    if (!priceEl) return;
+                    const base = parseFloat(priceEl.getAttribute('data-base-price') || '0');
+                    if (!base) return;
+                    const newPrice = base - (base * (parseFloat(discount) / 100));
+                    priceEl.textContent = `ر.س ${newPrice.toFixed(2)} (بدلاً من ${base})`;
+                }
+            });
+        });
     </script>
 
     <!-- ترتيب المنتجات -->
     <script>
-        const productsContainer = document.querySelector('.grid.grid-cols-2.md\\:grid-cols-3');
-    const products = Array.from(productsContainer.children);
-    products.sort((a,b) => {
-    const priceA = parseFloat(a.querySelector('p.font-semibold').textContent.replace(/[^\d]/g,''));
-    const priceB = parseFloat(b.querySelector('p.font-semibold').textContent.replace(/[^\d]/g,''));
-    return priceB - priceA;
-    });
-    products.forEach(p => productsContainer.appendChild(p));
+        document.addEventListener('DOMContentLoaded', () => {
+            const productsContainer = document.querySelector('.grid.grid-cols-2.md\\:grid-cols-3');
+            if (!productsContainer) return;
+
+            const products = Array.from(productsContainer.children || []);
+            if (products.length < 2) return;
+
+            const getPrice = (el) => {
+                const p = el && el.querySelector ? el.querySelector('p.font-semibold') : null;
+                if (!p) return 0;
+                const raw = String(p.textContent || '').replace(/[^\d.]/g,'');
+                const n = parseFloat(raw);
+                return isNaN(n) ? 0 : n;
+            };
+
+            products.sort((a, b) => getPrice(b) - getPrice(a));
+            products.forEach(p => productsContainer.appendChild(p));
+        });
     </script>
 
     <!-- سلايدر Swiper -->
-    <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
     <script>
-        var swiper = new Swiper('.swiper-container', {
-    loop:true,
-    autoplay:{delay:3000},
-    slidesPerView:1,
-    spaceBetween:0
-    });
+        document.addEventListener('DOMContentLoaded', () => {
+            const el = document.querySelector('.swiper-container');
+            if (!el) return;
+            if (window.Swiper) {
+                new Swiper('.swiper-container', {
+                    loop: true,
+                    autoplay: { delay: 3000 },
+                    slidesPerView: 1,
+                    spaceBetween: 0
+                });
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js';
+            script.async = true;
+            script.onload = () => {
+                if (!window.Swiper) return;
+                new Swiper('.swiper-container', {
+                    loop: true,
+                    autoplay: { delay: 3000 },
+                    slidesPerView: 1,
+                    spaceBetween: 0
+                });
+            };
+            document.head.appendChild(script);
+        });
     </script>
     <!-- header style two End -->
     @stack('js')
