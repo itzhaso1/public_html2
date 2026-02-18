@@ -486,8 +486,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script>
 document.getElementById('productForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-
     const form = this;
     const uploadBox = document.getElementById('uploadBox');
     const progressBar = document.getElementById('progressBar');
@@ -495,7 +493,59 @@ document.getElementById('productForm').addEventListener('submit', function (e) {
     const progressInfo = document.getElementById('progressInfo');
     const progressTime = document.getElementById('progressTime');
 
-    uploadBox.classList.remove('hidden');
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+
+    // Basic guard: prevent double submit
+    const submitBtn = document.getElementById('finalSubmit');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        submitBtn.textContent = 'جاري الإرسال...';
+    }
+
+    // Show overlay early so user doesn't think it's frozen
+    if (uploadBox) uploadBox.classList.remove('hidden');
+
+    // If SweetAlert2 didn't load yet, fallback to alert later
+    const showSuccess = () => {
+        if (window.Swal && Swal.fire) {
+            Swal.fire({
+                icon: 'success',
+                title: 'تم تحميل الحساب',
+                text: 'تم رفع المنتج بنجاح',
+                confirmButtonText: 'تمام'
+            }).then(() => window.location.reload());
+        } else {
+            alert('تم رفع المنتج بنجاح');
+            window.location.reload();
+        }
+    };
+    const showError = (msg) => {
+        const text = msg || 'حدث خطأ أثناء رفع المنتج';
+        if (window.Swal && Swal.fire) {
+            Swal.fire({ icon: 'error', title: 'خطأ', text });
+        } else {
+            alert(text);
+        }
+        if (uploadBox) uploadBox.classList.add('hidden');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitBtn.textContent = 'نشر الحساب';
+        }
+    };
+
+    // iOS Safari is more reliable with native form submit for large multi-file uploads.
+    if (isIOS) {
+        // Let the browser handle upload; keep a simple “uploading” overlay.
+        if (progressPercent) progressPercent.innerText = 'جاري الرفع...';
+        if (progressInfo) progressInfo.innerText = 'قد يستغرق وقتًا حسب حجم الصور — لا تغلق الصفحة';
+        if (progressTime) progressTime.innerText = '';
+        if (progressBar) progressBar.style.width = '35%';
+        return; // do NOT preventDefault => native submit continues
+    }
+
+    e.preventDefault();
 
     const formData = new FormData(form);
     const xhr = new XMLHttpRequest();
@@ -504,6 +554,7 @@ document.getElementById('productForm').addEventListener('submit', function (e) {
 
     xhr.open('POST', form.action, true);
     xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+    xhr.timeout = 12 * 60 * 1000; // 12 minutes
 
     xhr.upload.onprogress = function (e) {
         if (e.lengthComputable) {
@@ -525,28 +576,19 @@ document.getElementById('productForm').addEventListener('submit', function (e) {
 
     xhr.onload = function () {
         if (xhr.status >= 200 && xhr.status < 300) {
-            Swal.fire({
-                icon: 'success',
-                title: 'تم تحميل الحساب',
-                text: 'تم رفع المنتج بنجاح',
-                confirmButtonText: 'تمام'
-            }).then(() => {
-                window.location.reload();
-            });
+            showSuccess();
         } else {
             console.error(xhr.responseText);
-            Swal.fire({
-                icon: 'error',
-                title: 'خطأ',
-                text: 'حدث خطأ أثناء رفع المنتج'
-            });
-            uploadBox.classList.add('hidden');
+            showError('حدث خطأ أثناء رفع المنتج');
         }
     };
 
     xhr.onerror = function () {
-        alert('فشل الاتصال');
-        uploadBox.classList.add('hidden');
+        showError('فشل الاتصال أثناء الرفع');
+    };
+
+    xhr.ontimeout = function () {
+        showError('انتهت مهلة الرفع. حاول مرة أخرى أو قلّل حجم الصور.');
     };
 
     xhr.send(formData);
