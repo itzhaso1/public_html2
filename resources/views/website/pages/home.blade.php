@@ -441,44 +441,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     });
-
-    if (typeof Swiper !== "undefined") {
-        new Swiper(".reviewsSwiper", {
-            loop: true,
-            autoplay: {
-                delay: 3000,
-                disableOnInteraction: false,
-            },
-            slidesPerView: 1.2,
-            spaceBetween: 12,
-            centeredSlides: true,
-            speed: 600,
-            effect: "slide",
-            pagination: {
-                el: ".swiper-pagination",
-                clickable: true,
-            },
-            breakpoints: {
-                480: { slidesPerView: 1.4 },
-                640: { slidesPerView: 2 },
-                1024: { slidesPerView: 3 },
-            },
-        });
-    }
-
-    if (typeof Swiper !== "undefined" && document.querySelector('.swiper-container')) {
-        new Swiper('.swiper-container', {
-            loop: true,
-            autoplay: {
-                delay: 4000,
-                disableOnInteraction: false,
-            },
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-        });
-    }
 });
 </script>
 @endpush

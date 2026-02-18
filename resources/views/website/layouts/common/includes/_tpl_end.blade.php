@@ -280,32 +280,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
     <!-- سلايدر Swiper -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const el = document.querySelector('.swiper-container');
-            if (!el) return;
-            if (window.Swiper) {
-                new Swiper('.swiper-container', {
-                    loop: true,
-                    autoplay: { delay: 3000 },
-                    slidesPerView: 1,
-                    spaceBetween: 0
-                });
-                return;
-            }
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js';
-            script.async = true;
-            script.onload = () => {
-                if (!window.Swiper) return;
-                new Swiper('.swiper-container', {
-                    loop: true,
-                    autoplay: { delay: 3000 },
-                    slidesPerView: 1,
-                    spaceBetween: 0
+        (function () {
+            const hasSwiperElements = () => !!document.querySelector('.swiper-container, .swiper');
+            if (!hasSwiperElements()) return;
+
+            const initHeroSwipers = () => {
+                document.querySelectorAll('.swiper-container').forEach((el) => {
+                    if (el && el.swiper) return;
+                    try {
+                        new Swiper(el, {
+                            loop: true,
+                            autoplay: { delay: 3000 },
+                            slidesPerView: 1,
+                            spaceBetween: 0
+                        });
+                    } catch (e) {}
                 });
             };
-            document.head.appendChild(script);
-        });
+
+            const initReviewsSwiper = () => {
+                const el = document.querySelector('.reviewsSwiper');
+                if (!el || el.swiper) return;
+                try {
+                    new Swiper(el, {
+                        loop: true,
+                        autoplay: { delay: 3000, disableOnInteraction: false },
+                        slidesPerView: 1.2,
+                        spaceBetween: 12,
+                        centeredSlides: true,
+                        speed: 600,
+                        effect: "slide",
+                        pagination: { el: ".swiper-pagination", clickable: true },
+                        breakpoints: {
+                            480: { slidesPerView: 1.4 },
+                            640: { slidesPerView: 2 },
+                            1024: { slidesPerView: 3 },
+                        },
+                    });
+                } catch (e) {}
+            };
+
+            const initAll = () => {
+                if (!window.Swiper) return;
+                initHeroSwipers();
+                initReviewsSwiper();
+            };
+
+            const loadSwiperOnce = (cb) => {
+                if (window.Swiper) return cb();
+                if (window.__swiperLoading) {
+                    window.__swiperQueue = window.__swiperQueue || [];
+                    window.__swiperQueue.push(cb);
+                    return;
+                }
+                window.__swiperLoading = true;
+                window.__swiperQueue = window.__swiperQueue || [];
+                window.__swiperQueue.push(cb);
+
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js';
+                script.async = true;
+                script.onload = () => {
+                    window.__swiperLoading = false;
+                    const q = window.__swiperQueue || [];
+                    window.__swiperQueue = [];
+                    q.forEach(fn => { try { fn(); } catch (e) {} });
+                };
+                script.onerror = () => { window.__swiperLoading = false; window.__swiperQueue = []; };
+                document.head.appendChild(script);
+            };
+
+            const start = () => loadSwiperOnce(initAll);
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', start);
+            } else {
+                start();
+            }
+        })();
     </script>
     <!-- header style two End -->
     @stack('js')
