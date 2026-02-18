@@ -15,6 +15,14 @@ use App\Notifications\ChargeCompletedNotification;
 
 class ManualPaymentController extends Controller
 {
+    private function forgetDiamondsCaches(): void
+    {
+        foreach (['ar', 'en'] as $locale) {
+            Cache::forget("diamonds.codes.$locale");
+            Cache::forget("diamonds.charge.$locale");
+        }
+    }
+
     private function isDeliveredStatus(?string $status): bool
     {
         $s = strtoupper(trim((string) $status));
@@ -368,6 +376,93 @@ class ManualPaymentController extends Controller
         return redirect()
             ->route('admin.manual_payments.show', $manualPaymentRequest)
             ->with('success', 'تم رفض الطلب.');
+    }
+
+    public function destroy(Request $request, ManualPaymentRequest $manualPaymentRequest)
+    {
+        $data = $request->validate([
+            'confirm' => ['required', 'in:DELETE'],
+        ]);
+
+        $receipt = $manualPaymentRequest->receipt_path;
+        if ($receipt) {
+            try {
+                Storage::disk('public')->delete($receipt);
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
+
+        $manualPaymentRequest->delete();
+        $this->forgetDiamondsCaches();
+
+        return redirect()
+            ->route('admin.manual_payments.index')
+            ->with('success', 'تم حذف الطلب ✅');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $data = $request->validate([
+            'confirm' => ['required', 'in:DELETE'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $ids = array_values(array_unique(array_map('intval', $data['ids'] ?? [])));
+        if (empty($ids)) {
+            return back()->withErrors(['error' => 'لم يتم تحديد طلبات للحذف.']);
+        }
+
+        $requests = ManualPaymentRequest::query()
+            ->whereIn('id', $ids)
+            ->get(['id', 'receipt_path']);
+
+        foreach ($requests as $r) {
+            if (!empty($r->receipt_path)) {
+                try {
+                    Storage::disk('public')->delete($r->receipt_path);
+                } catch (\Throwable $e) {
+                    // ignore
+                }
+            }
+        }
+
+        ManualPaymentRequest::query()->whereIn('id', $ids)->delete();
+        $this->forgetDiamondsCaches();
+
+        return back()->with('success', 'تم حذف الطلبات المحددة ✅');
+    }
+
+    public function deleteAll(Request $request)
+    {
+        $data = $request->validate([
+            'confirm' => ['required', 'in:DELETE'],
+        ]);
+
+        ManualPaymentRequest::query()
+            ->select(['id', 'receipt_path'])
+            ->orderBy('id')
+            ->chunkById(200, function ($chunk) {
+                $ids = [];
+                foreach ($chunk as $r) {
+                    $ids[] = $r->id;
+                    if (!empty($r->receipt_path)) {
+                        try {
+                            Storage::disk('public')->delete($r->receipt_path);
+                        } catch (\Throwable $e) {
+                            // ignore
+                        }
+                    }
+                }
+                if (!empty($ids)) {
+                    ManualPaymentRequest::query()->whereIn('id', $ids)->delete();
+                }
+            });
+
+        $this->forgetDiamondsCaches();
+
+        return back()->with('success', 'تم حذف جميع طلبات الدفع اليدوي ✅');
     }
 }
 

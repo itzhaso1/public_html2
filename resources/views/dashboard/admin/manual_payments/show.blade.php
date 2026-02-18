@@ -18,6 +18,16 @@
                class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold hover:bg-gray-50 transition">
                 رجوع
             </a>
+            <form method="POST" action="{{ route('admin.manual_payments.destroy', $mpr) }}" class="inline-flex">
+                @csrf
+                @method('DELETE')
+                <input type="hidden" name="confirm" value="DELETE">
+                <button type="button"
+                        onclick="const v=prompt('اكتب DELETE لتأكيد حذف هذا الطلب'); if(v==='DELETE'){ this.form.submit(); }"
+                        class="inline-flex items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-sm font-extrabold text-white hover:bg-red-700 transition">
+                    حذف الطلب
+                </button>
+            </form>
             <a href="{{ route('admin.dashboard') }}"
                class="inline-flex items-center justify-center rounded-xl bg-black px-4 py-2 text-sm font-bold text-white hover:bg-gray-800 transition">
                 لوحة التحكم

@@ -58,11 +58,14 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
 
         Route::prefix('manual-payments')->as('manual_payments.')->group(function () {
             Route::get('/', [Dashboard\ManualPaymentController::class, 'index'])->name('index');
+            Route::post('bulk-delete', [Dashboard\ManualPaymentController::class, 'bulkDelete'])->name('bulk_delete');
+            Route::post('delete-all', [Dashboard\ManualPaymentController::class, 'deleteAll'])->name('delete_all');
             Route::get('{manualPaymentRequest}', [Dashboard\ManualPaymentController::class, 'show'])->name('show');
             Route::get('{manualPaymentRequest}/receipt', [Dashboard\ManualPaymentController::class, 'receipt'])->name('receipt');
             Route::post('{manualPaymentRequest}/transaction', [Dashboard\ManualPaymentController::class, 'checkTransaction'])->name('transaction');
             Route::post('{manualPaymentRequest}/approve', [Dashboard\ManualPaymentController::class, 'approve'])->name('approve');
             Route::post('{manualPaymentRequest}/reject', [Dashboard\ManualPaymentController::class, 'reject'])->name('reject');
+            Route::delete('{manualPaymentRequest}', [Dashboard\ManualPaymentController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('diamond-codes')->as('diamond_codes.')->group(function () {
@@ -87,9 +90,12 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
             Route::delete('offers/{offer}', [Dashboard\CashExchangeOfferController::class, 'destroy'])->name('offers.destroy');
 
             Route::get('requests', [Dashboard\CashExchangeRequestController::class, 'index'])->name('requests.index');
+            Route::post('requests/bulk-delete', [Dashboard\CashExchangeRequestController::class, 'bulkDelete'])->name('requests.bulk_delete');
+            Route::post('requests/delete-all', [Dashboard\CashExchangeRequestController::class, 'deleteAll'])->name('requests.delete_all');
             Route::get('requests/{cashExchangeRequest}', [Dashboard\CashExchangeRequestController::class, 'show'])->name('requests.show');
             Route::post('requests/{cashExchangeRequest}/note', [Dashboard\CashExchangeRequestController::class, 'updateNote'])->name('requests.note');
             Route::post('requests/{cashExchangeRequest}/complete', [Dashboard\CashExchangeRequestController::class, 'complete'])->name('requests.complete');
+            Route::delete('requests/{cashExchangeRequest}', [Dashboard\CashExchangeRequestController::class, 'destroy'])->name('requests.destroy');
         });
 
         // Money Exchange (SAR ↔ USDT)
@@ -98,9 +104,12 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
             Route::post('settings', [Dashboard\MoneyExchangeSettingController::class, 'update'])->name('settings.update');
 
             Route::get('requests', [Dashboard\MoneyExchangeRequestController::class, 'index'])->name('requests.index');
+            Route::post('requests/bulk-delete', [Dashboard\MoneyExchangeRequestController::class, 'bulkDelete'])->name('requests.bulk_delete');
+            Route::post('requests/delete-all', [Dashboard\MoneyExchangeRequestController::class, 'deleteAll'])->name('requests.delete_all');
             Route::get('requests/{moneyExchangeRequest}', [Dashboard\MoneyExchangeRequestController::class, 'show'])->name('requests.show');
             Route::post('requests/{moneyExchangeRequest}/complete', [Dashboard\MoneyExchangeRequestController::class, 'complete'])->name('requests.complete');
             Route::post('requests/{moneyExchangeRequest}/reject', [Dashboard\MoneyExchangeRequestController::class, 'reject'])->name('requests.reject');
+            Route::delete('requests/{moneyExchangeRequest}', [Dashboard\MoneyExchangeRequestController::class, 'destroy'])->name('requests.destroy');
         });
         
         Route::get('dashboard', Dashboard\DashboardController::class)->name('dashboard');

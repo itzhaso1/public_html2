@@ -66,5 +66,57 @@ class CashExchangeRequestController extends Controller
 
         return back()->with('success', 'تم حفظ الملاحظة ✅');
     }
+
+    public function destroy(Request $request, CashExchangeRequest $cashExchangeRequest)
+    {
+        $request->validate([
+            'confirm' => ['required', 'in:DELETE'],
+        ]);
+
+        $cashExchangeRequest->delete();
+
+        return redirect()
+            ->route('admin.cash_exchange.requests.index', ['status' => 'all'])
+            ->with('success', 'تم حذف الطلب ✅');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $data = $request->validate([
+            'confirm' => ['required', 'in:DELETE'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $ids = array_values(array_unique(array_map('intval', $data['ids'] ?? [])));
+        if (empty($ids)) {
+            return back()->withErrors(['error' => 'لم يتم تحديد طلبات للحذف.']);
+        }
+
+        CashExchangeRequest::query()->whereIn('id', $ids)->delete();
+
+        return back()->with('success', 'تم حذف الطلبات المحددة ✅');
+    }
+
+    public function deleteAll(Request $request)
+    {
+        $data = $request->validate([
+            'confirm' => ['required', 'in:DELETE'],
+            'status' => ['nullable', 'in:pending,completed,all'],
+        ]);
+
+        $status = (string) ($data['status'] ?? $request->query('status', 'all'));
+        if (!in_array($status, ['pending', 'completed', 'all'], true)) {
+            $status = 'all';
+        }
+
+        $q = CashExchangeRequest::query();
+        if ($status !== 'all') {
+            $q->where('status', $status);
+        }
+        $q->delete();
+
+        return back()->with('success', 'تم حذف الطلبات ✅');
+    }
 }
 

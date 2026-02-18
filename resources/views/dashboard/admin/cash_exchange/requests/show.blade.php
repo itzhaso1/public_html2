@@ -10,6 +10,15 @@
             <h3 class="card-title">{{ $pageTitle }}</h3>
             <div class="card-toolbar">
                 <a href="{{ route('admin.cash_exchange.requests.index') }}" class="btn btn-sm btn-light">رجوع</a>
+                <form method="POST" action="{{ route('admin.cash_exchange.requests.destroy', $req) }}" class="d-inline-block ms-2">
+                    @csrf
+                    @method('DELETE')
+                    <input type="hidden" name="confirm" value="DELETE">
+                    <button type="button" class="btn btn-sm btn-danger"
+                            onclick="const v=prompt('اكتب DELETE لتأكيد حذف هذا الطلب'); if(v==='DELETE'){ this.form.submit(); }">
+                        حذف
+                    </button>
+                </form>
             </div>
         </div>
         <div class="card-body">
