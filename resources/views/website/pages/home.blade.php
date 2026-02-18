@@ -97,21 +97,34 @@
 <div class="px-4 mt-4">
     <div class="grid grid-cols-2 gap-3 sm:gap-4">
 
+        @php
+            $chargeTitle = $settings?->home_quick_charge_title ?: 'شحن جواهر';
+            $codesTitle = $settings?->home_quick_codes_title ?: 'أكواد ملابس';
+            $cashTitle = $settings?->home_quick_cash_exchange_title ?: 'استبدل رصيدك كاش';
+            $moneyTitle = $settings?->home_quick_money_exchange_title ?: 'تحويل الأموال';
+
+            $defaultQuickImg = asset('public/uploads/oki/old.png');
+            $chargeImg = $settings?->getMediaUrl('setting', $settings, null, 'media', 'home_quick_charge') ?: $defaultQuickImg;
+            $codesImg = $settings?->getMediaUrl('setting', $settings, null, 'media', 'home_quick_codes') ?: $defaultQuickImg;
+            $cashImg = $settings?->getMediaUrl('setting', $settings, null, 'media', 'home_quick_cash_exchange') ?: null;
+            $moneyImg = $settings?->getMediaUrl('setting', $settings, null, 'media', 'home_quick_money_exchange') ?: null;
+        @endphp
+
         <!-- شحن جواهر -->
         <a href="{{ route('website.diamonds.charge') }}"
            class="group relative overflow-hidden rounded-2xl border border-yellow-200 bg-gradient-to-l from-yellow-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
             <div class="p-2.5 sm:p-4">
                 <div class="flex items-center justify-center">
                     {{-- غيّر الصورة كما تريد --}}
-                    <img src="{{ asset('public/uploads/oki/old.png') }}"
-                         alt="شحن جواهر"
+                    <img src="{{ $chargeImg }}"
+                         alt="{{ $chargeTitle }}"
                          class="w-full h-24 sm:h-32 object-cover rounded-xl"
                          loading="lazy" decoding="async">
                 </div>
 
                 <div class="mt-2 text-center">
                     <span class="inline-block text-xs text-gray-500">القسم</span>
-                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">شحن جواهر</h3>
+                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">{{ $chargeTitle }}</h3>
                 </div>
 
                 <p class="text-[11px] sm:text-sm text-gray-600 mt-2 text-center leading-relaxed">
@@ -133,15 +146,15 @@
             <div class="p-2.5 sm:p-4">
                 <div class="flex items-center justify-center">
                     {{-- غيّر الصورة كما تريد --}}
-                    <img src="{{ asset('public/uploads/oki/old.png') }}"
-                         alt="أكواد جواهر"
+                    <img src="{{ $codesImg }}"
+                         alt="{{ $codesTitle }}"
                          class="w-full h-24 sm:h-32 object-cover rounded-xl"
                          loading="lazy" decoding="async">
                 </div>
 
                 <div class="mt-2 text-center">
                     <span class="inline-block text-xs text-gray-500">القسم</span>
-                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">أكواد ملابس</h3>
+                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">{{ $codesTitle }}</h3>
                 </div>
 
                 <p class="text-[11px] sm:text-sm text-gray-600 mt-2 text-center leading-relaxed">
@@ -162,14 +175,20 @@
            class="group relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-l from-emerald-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
             <div class="p-2.5 sm:p-4">
                 <div class="flex items-center justify-center">
-                    <div class="w-full h-24 sm:h-32 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-700 text-4xl font-extrabold">
-                        💵
-                    </div>
+                    @if($cashImg)
+                        <img src="{{ $cashImg }}" alt="{{ $cashTitle }}"
+                             class="w-full h-24 sm:h-32 object-cover rounded-xl"
+                             loading="lazy" decoding="async">
+                    @else
+                        <div class="w-full h-24 sm:h-32 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-700 text-4xl font-extrabold">
+                            💵
+                        </div>
+                    @endif
                 </div>
 
                 <div class="mt-2 text-center">
                     <span class="inline-block text-xs text-gray-500">القسم</span>
-                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">استبدل رصيدك كاش</h3>
+                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">{{ $cashTitle }}</h3>
                 </div>
 
                 <p class="text-[11px] sm:text-sm text-gray-600 mt-2 text-center leading-relaxed">
@@ -190,14 +209,20 @@
            class="group relative overflow-hidden rounded-2xl border border-purple-200 bg-gradient-to-l from-purple-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
             <div class="p-2.5 sm:p-4">
                 <div class="flex items-center justify-center">
-                    <div class="w-full h-24 sm:h-32 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-700 text-4xl font-extrabold">
-                        💱
-                    </div>
+                    @if($moneyImg)
+                        <img src="{{ $moneyImg }}" alt="{{ $moneyTitle }}"
+                             class="w-full h-24 sm:h-32 object-cover rounded-xl"
+                             loading="lazy" decoding="async">
+                    @else
+                        <div class="w-full h-24 sm:h-32 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-700 text-4xl font-extrabold">
+                            💱
+                        </div>
+                    @endif
                 </div>
 
                 <div class="mt-2 text-center">
                     <span class="inline-block text-xs text-gray-500">القسم</span>
-                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">تحويل الأموال</h3>
+                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">{{ $moneyTitle }}</h3>
                 </div>
 
                 <p class="text-[11px] sm:text-sm text-gray-600 mt-2 text-center leading-relaxed">

@@ -116,6 +116,82 @@
                         </div>
                     </div>
 
+                    <!-- Home Quick Sections (Homepage cards) -->
+                    <div class="container p-4 mt-4 bg-white rounded shadow">
+                        <h4 class="mb-3 fw-bolder">كروت الأقسام في الصفحة الرئيسية (تعديل الاسم والصورة)</h4>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded">
+                                    <div class="fw-bold mb-2">كرت الشحن</div>
+                                    <label class="input-group-text text-dark">الاسم</label>
+                                    <input type="text" class="form-control" name="home_quick_charge_title"
+                                           value="{{ old('home_quick_charge_title', $setting?->home_quick_charge_title) }}"
+                                           placeholder="شحن جواهر">
+                                    <div class="mt-2">
+                                        <label class="form-label fw-bold">الصورة</label>
+                                        <input class="form-control" type="file" name="home_quick_charge_image" accept="image/*">
+                                        @if(!empty($homeQuickChargeImg))
+                                            <img src="{{ $homeQuickChargeImg }}" class="img-fluid mt-2" style="max-height: 80px;">
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded">
+                                    <div class="fw-bold mb-2">كرت الأكواد</div>
+                                    <label class="input-group-text text-dark">الاسم</label>
+                                    <input type="text" class="form-control" name="home_quick_codes_title"
+                                           value="{{ old('home_quick_codes_title', $setting?->home_quick_codes_title) }}"
+                                           placeholder="أكواد ملابس">
+                                    <div class="mt-2">
+                                        <label class="form-label fw-bold">الصورة</label>
+                                        <input class="form-control" type="file" name="home_quick_codes_image" accept="image/*">
+                                        @if(!empty($homeQuickCodesImg))
+                                            <img src="{{ $homeQuickCodesImg }}" class="img-fluid mt-2" style="max-height: 80px;">
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded">
+                                    <div class="fw-bold mb-2">كرت استبدال الرصيد كاش</div>
+                                    <label class="input-group-text text-dark">الاسم</label>
+                                    <input type="text" class="form-control" name="home_quick_cash_exchange_title"
+                                           value="{{ old('home_quick_cash_exchange_title', $setting?->home_quick_cash_exchange_title) }}"
+                                           placeholder="استبدل رصيدك كاش">
+                                    <div class="mt-2">
+                                        <label class="form-label fw-bold">الصورة</label>
+                                        <input class="form-control" type="file" name="home_quick_cash_exchange_image" accept="image/*">
+                                        @if(!empty($homeQuickCashExchangeImg))
+                                            <img src="{{ $homeQuickCashExchangeImg }}" class="img-fluid mt-2" style="max-height: 80px;">
+                                        @endif
+                                        <div class="form-text">إذا لم ترفع صورة سيظهر رمز افتراضي.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded">
+                                    <div class="fw-bold mb-2">كرت تحويل الأموال</div>
+                                    <label class="input-group-text text-dark">الاسم</label>
+                                    <input type="text" class="form-control" name="home_quick_money_exchange_title"
+                                           value="{{ old('home_quick_money_exchange_title', $setting?->home_quick_money_exchange_title) }}"
+                                           placeholder="تحويل الأموال">
+                                    <div class="mt-2">
+                                        <label class="form-label fw-bold">الصورة</label>
+                                        <input class="form-control" type="file" name="home_quick_money_exchange_image" accept="image/*">
+                                        @if(!empty($homeQuickMoneyExchangeImg))
+                                            <img src="{{ $homeQuickMoneyExchangeImg }}" class="img-fluid mt-2" style="max-height: 80px;">
+                                        @endif
+                                        <div class="form-text">إذا لم ترفع صورة سيظهر رمز افتراضي.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- End Name & alert message -->
                     <hr>
                     <div class="form-row">
