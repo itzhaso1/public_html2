@@ -249,13 +249,13 @@
         <h2 class="text-center font-bold text-xl mb-4">{{ $section->name }}</h2>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            @foreach($section->products as $product)
+            @foreach(($section->products ?? collect())->sortByDesc('price') as $product)
                 @php
                     $imageUrl = $product->getMediaUrl('product', $product, null, 'media', 'product');
                     $thumb = ($product->service_type ?? null) === 'codes' ? ($product->codeThumbnail?->image_path ?? null) : null;
                     $thumbUrl = $thumb ? Storage::disk('public')->url($thumb) : null;
                     $productImage = $imageUrl ?: ($thumbUrl ?: $fallbackImage);
-                    $isSold = $product->featured === 1;
+                    $isSold = (bool) ($product->featured ?? false);
                     $discountPercent = null;
 
                     if (!empty($product->price_before_discount) && $product->price_before_discount > 0) {
@@ -331,7 +331,7 @@
             @php
                 $imageUrl = $product->getMediaUrl('product', $product, null, 'media', 'product');
                 $productImage = $imageUrl ?: $fallbackImage;
-                $isSold = $product->featured === 1;
+                $isSold = (bool) ($product->featured ?? false);
                 $discountPercent = null;
 
                 if (!empty($product->price_before_discount) && $product->price_before_discount > 0) {

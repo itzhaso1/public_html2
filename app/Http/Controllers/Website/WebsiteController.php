@@ -54,7 +54,8 @@ class WebsiteController extends Controller
                 ->where('status', 'published')
                 ->whereNotIn('id', $sectionProductIds)
                 ->whereNull('service_type') // ✅ إخفاء الجواهر من هنا
-                ->latest()
+                ->orderByDesc('price')
+                ->orderByDesc('id')
                 ->get();
         });
             
