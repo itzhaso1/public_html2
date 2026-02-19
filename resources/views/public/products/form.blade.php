@@ -154,15 +154,51 @@
             <!-- STEP 4 -->
             <div class="step hidden" data-step="4">
                 <div>
-                    <label class="text-sm text-gray-600">رقم هاتفك</label>
-                    <input
-                        type="text"
-                        name="client_number"
-                        value="{{ old('client_number', $product->client_number ?? '') }}"
-                        class="mt-2 w-full rounded-2xl border border-gray-300 bg-gray-50
-                               px-4 py-5 text-lg
-                               focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    >
+                    <label class="text-sm text-gray-600">رقم الواتساب</label>
+
+                    <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <select id="clientDial" name="client_dial"
+                                class="w-full rounded-2xl border border-gray-300 bg-gray-50 px-4 py-5 text-base focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="962">🇯🇴 الأردن (+962)</option>
+                            <option value="966">🇸🇦 السعودية (+966)</option>
+                            <option value="971">🇦🇪 الإمارات (+971)</option>
+                            <option value="965">🇰🇼 الكويت (+965)</option>
+                            <option value="974">🇶🇦 قطر (+974)</option>
+                            <option value="973">🇧🇭 البحرين (+973)</option>
+                            <option value="968">🇴🇲 عُمان (+968)</option>
+                            <option value="20">🇪🇬 مصر (+20)</option>
+                            <option value="964">🇮🇶 العراق (+964)</option>
+                            <option value="961">🇱🇧 لبنان (+961)</option>
+                            <option value="970">🇵🇸 فلسطين (+970)</option>
+                            <option value="967">🇾🇪 اليمن (+967)</option>
+                            <option value="963">🇸🇾 سوريا (+963)</option>
+                            <option value="212">🇲🇦 المغرب (+212)</option>
+                            <option value="216">🇹🇳 تونس (+216)</option>
+                            <option value="213">🇩🇿 الجزائر (+213)</option>
+                            <option value="218">🇱🇾 ليبيا (+218)</option>
+                            <option value="249">🇸🇩 السودان (+249)</option>
+                        </select>
+
+                        <input
+                            id="clientLocal"
+                            type="tel"
+                            inputmode="numeric"
+                            autocomplete="tel"
+                            placeholder="اكتب رقمك بدون كود الدولة"
+                            value=""
+                            class="sm:col-span-2 w-full rounded-2xl border border-gray-300 bg-gray-50
+                                   px-4 py-5 text-lg
+                                   placeholder:text-gray-400
+                                   focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        >
+                    </div>
+
+                    <input type="hidden" id="clientNumberFull" name="client_number"
+                           value="{{ old('client_number', $product->client_number ?? '') }}">
+
+                    <div class="mt-2 text-xs text-gray-500">
+                        سيتم إرسال إشعار واتساب عند <b>قبول</b> أو <b>رفض</b> طلبك.
+                    </div>
                     @error('client_number')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                     @enderror
@@ -427,6 +463,19 @@ function validateStep(step) {
             return false;
         }
     }
+    if (step === 4) {
+        const dial = document.getElementById('clientDial');
+        const local = document.getElementById('clientLocal');
+        const full = document.getElementById('clientNumberFull');
+        if (dial && local && full) {
+            syncClientNumber();
+            const v = (full.value || '').trim();
+            if (v.length < 9) {
+                alert('رقم الواتساب مطلوب');
+                return false;
+            }
+        }
+    }
     if (step === 5) {
         const mainImage = document.querySelector('input[name="product"]');
         if (!mainImage || mainImage.files.length === 0) {
@@ -442,6 +491,26 @@ function validateStep(step) {
         }
     }
     return true;
+}
+
+function syncClientNumber() {
+    const dial = document.getElementById('clientDial');
+    const local = document.getElementById('clientLocal');
+    const full = document.getElementById('clientNumberFull');
+    if (!dial || !local || !full) return;
+
+    const dialDigits = (dial.value || '').replace(/\D+/g, '');
+    let localDigits = (local.value || '').replace(/\D+/g, '');
+    // remove leading zeros users usually type
+    localDigits = localDigits.replace(/^0+/, '');
+
+    // If user pasted full international number into local field, keep it as-is.
+    if (dialDigits && localDigits.startsWith(dialDigits) && localDigits.length >= dialDigits.length + 6) {
+        full.value = localDigits;
+        return;
+    }
+
+    full.value = (dialDigits + localDigits).replace(/\D+/g, '');
 }
 
 function nextStep() {
@@ -467,7 +536,8 @@ function updateReview() {
     const name = document.querySelector('input[name="ar[name]"]')?.value?.trim() || '—';
     const shortDesc = document.querySelector('textarea[name="ar[short_description]"]')?.value?.trim() || '—';
     const price = document.querySelector('input[name="price"]')?.value?.trim() || '—';
-    const phone = document.querySelector('input[name="client_number"]')?.value?.trim() || '—';
+    syncClientNumber();
+    const phone = document.getElementById('clientNumberFull')?.value?.trim() || '—';
     const mainImage = document.querySelector('input[name="product"]')?.files?.[0]?.name || 'غير مرفوعة';
     const galleryCount = document.querySelector('input[name="gallery[]"]')?.files?.length || 0;
 
@@ -481,12 +551,40 @@ function updateReview() {
 
 document.addEventListener('DOMContentLoaded', () => {
     showStep(currentStep);
+    // Keep hidden full phone in sync.
+    try {
+        document.getElementById('clientDial')?.addEventListener('change', syncClientNumber);
+        document.getElementById('clientLocal')?.addEventListener('input', syncClientNumber);
+
+        // Pre-fill local phone if full already exists (old input).
+        const full = document.getElementById('clientNumberFull');
+        const dial = document.getElementById('clientDial');
+        const local = document.getElementById('clientLocal');
+        if (full && dial && local) {
+            const fullDigits = (full.value || '').replace(/\D+/g, '');
+            if (fullDigits.length >= 8) {
+                const dials = Array.from(dial.options).map(o => (o.value || '').replace(/\D+/g, ''))
+                    .filter(Boolean)
+                    .sort((a, b) => b.length - a.length);
+                const match = dials.find(d => fullDigits.startsWith(d));
+                if (match) {
+                    dial.value = match;
+                    local.value = fullDigits.slice(match.length);
+                } else {
+                    // fallback: show last 9 digits
+                    local.value = fullDigits.slice(-9);
+                }
+            }
+            syncClientNumber();
+        }
+    } catch (e) {}
 });
 </script>
 
 <script>
 document.getElementById('productForm').addEventListener('submit', function (e) {
     const form = this;
+    try { syncClientNumber(); } catch (e) {}
     const uploadBox = document.getElementById('uploadBox');
     const progressBar = document.getElementById('progressBar');
     const progressPercent = document.getElementById('progressPercent');

@@ -161,6 +161,7 @@ class PublicProductRequestController extends Controller
         $app = (string) config('app.name', 'المتجر');
         $name = (string) ($product->name ?? '');
         $trackUrl = route('public.products.track', ['slug' => $product->slug]);
+        $publishUrl = route('public.products.create');
         $note = trim((string) ($product->review_note ?? ''));
         $noteLine = $note !== '' ? ("\nملاحظة الإدارة: " . mb_substr($note, 0, 250)) : '';
 
@@ -190,6 +191,7 @@ class PublicProductRequestController extends Controller
                 ($name !== '' ? "اسم الحساب: {$name}\n" : '') .
                 $reasonsBlock .
                 $noteLine . "\n" .
+                "أعد نشره بعد تعديل الشروط الصحيحة من هنا: {$publishUrl}\n" .
                 "متابعة الطلب: {$trackUrl}"
             );
         }

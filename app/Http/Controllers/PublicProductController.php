@@ -12,6 +12,7 @@ use App\Models\Category;
 use App\Models\Type;
 use App\Models\Tag;
 use App\Models\Product;
+use App\Support\WhatsApp\WhatsAppNumber;
 
 class PublicProductController extends Controller
 {
@@ -43,6 +44,12 @@ class PublicProductController extends Controller
     public function store(Request $request)
     {
         try {
+            // Normalize customer WhatsApp number (digits only, fixes common formats).
+            $normalizedPhone = WhatsAppNumber::normalize((string) $request->input('client_number', ''));
+            if ($normalizedPhone !== '') {
+                $request->merge(['client_number' => $normalizedPhone]);
+            }
+
             // Always create as "pending review" before publishing.
             $slug = Str::random(32);
             $payload = [
