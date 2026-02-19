@@ -47,6 +47,14 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
         Route::post('products/import', [Dashboard\ProductController::class, 'import'])->name('products.import');
         Route::post('products/test-erp-connection', [Dashboard\ProductController::class, 'exportProductsToERP'])->name('test-erp-connection');
 
+        // طلبات نشر الحسابات من صفحة /publish-product (تحتاج موافقة قبل النشر)
+        Route::prefix('public-products')->as('public_products.')->group(function () {
+            Route::get('/', [Dashboard\PublicProductRequestController::class, 'index'])->name('index');
+            Route::get('{product}', [Dashboard\PublicProductRequestController::class, 'show'])->name('show');
+            Route::post('{product}/approve', [Dashboard\PublicProductRequestController::class, 'approve'])->name('approve');
+            Route::post('{product}/reject', [Dashboard\PublicProductRequestController::class, 'reject'])->name('reject');
+        });
+
         // التصنيفات (الأقسام)
         Route::resource('categories', Dashboard\CategoryController::class);
         Route::post('categories/import', [Dashboard\CategoryController::class, 'import'])->name('categories.import');

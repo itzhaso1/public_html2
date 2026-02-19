@@ -282,6 +282,12 @@ if ($request->hasFile('video')) {
             'featured',
             'slug',
             'client_number',
+            'publish_source',
+            'review_note',
+            'review_reject_reasons',
+            'reviewed_by',
+            'reviewed_at',
+            'rejected_at',
         ]);
 
         if (empty($data['category_id'])) {

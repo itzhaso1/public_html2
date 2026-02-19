@@ -142,6 +142,7 @@ Route::group(
         // ===============================
         Route::get('publish-product', [PublicProductController::class, 'create'])->name('public.products.create');
         Route::post('publish-product', [PublicProductController::class, 'store'])->name('public.products.store');
+        Route::get('publish-product/requests/{slug}', [PublicProductController::class, 'track'])->name('public.products.track');
  
         // ===============================
         // Customer dashboard

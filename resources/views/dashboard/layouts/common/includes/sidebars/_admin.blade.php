@@ -53,6 +53,14 @@
         </a>
     </div>
 
+    <!-- Public publish requests (publish-product) -->
+    <div class="menu-item">
+        <a class="menu-link {{ is_active('admin.public_products.*') }}" href="{{ route('admin.public_products.index') }}">
+            <span class="menu-icon"><i class="bi bi-clipboard-check fs-2"></i></span>
+            <span class="menu-title">طلبات نشر الحسابات</span>
+        </a>
+    </div>
+
     <!-- Sections (homepage groupings) -->
     <div class="menu-item">
         <a class="menu-link {{ is_active('admin.sections.*') }}" href="{{ route('admin.sections.index') }}">

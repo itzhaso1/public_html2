@@ -74,6 +74,11 @@ class WebsiteController extends Controller
  
     public function show(Product $product)
     {
+        // Hide unapproved public submissions from direct links.
+        if (($product->publish_source ?? null) === 'public' && (string) ($product->status ?? 'draft') !== 'published') {
+            abort(404);
+        }
+
         // ============================================================
         // ✅ التعديل الجديد: توجيه منتجات الشحن لصفحة خاصة
         // ============================================================
