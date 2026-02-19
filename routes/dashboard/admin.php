@@ -53,6 +53,7 @@ Route::group(['prefix' => LaravelLocalization::setLocale(), 'middleware' => ['lo
             Route::get('{product}', [Dashboard\PublicProductRequestController::class, 'show'])->name('show');
             Route::post('{product}/approve', [Dashboard\PublicProductRequestController::class, 'approve'])->name('approve');
             Route::post('{product}/reject', [Dashboard\PublicProductRequestController::class, 'reject'])->name('reject');
+            Route::delete('{product}', [Dashboard\PublicProductRequestController::class, 'destroy'])->name('destroy');
         });
 
         // التصنيفات (الأقسام)

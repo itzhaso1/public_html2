@@ -196,5 +196,65 @@ class PublicProductRequestController extends Controller
 
         WasenderNotifier::sendAfterCommit($to, $text);
     }
+
+    public function destroy(Request $request, Product $product)
+    {
+        $this->ensurePublic($product);
+
+        $request->validate([
+            'confirm' => ['required', 'in:DELETE'],
+        ]);
+
+        try { $product->loadMissing(['media', 'translations']); } catch (\Throwable $e) {}
+
+        // Remove uploaded files + media records (best-effort)
+        try {
+            if (method_exists($product, 'media')) {
+                $items = $product->media()->get();
+                foreach ($items as $m) {
+                    $collection = (string) ($m->collection_name ?? '');
+                    $file = (string) ($m->file_name ?? '');
+                    $disk = (string) ($m->disk ?? 'direct_public');
+                    if ($file === '') {
+                        $m->delete();
+                        continue;
+                    }
+
+                    // Determine base folder by collection name used by upload trait.
+                    $baseFolder = null;
+                    if ($collection === 'product' || $collection === 'default') {
+                        $baseFolder = 'product';
+                    } elseif ($collection === 'gallery') {
+                        $baseFolder = 'product/gallery';
+                    }
+
+                    if ($baseFolder) {
+                        $base = "uploads/{$baseFolder}";
+                        $useStorage = $disk === 'storage_public';
+                        try {
+                            // UploadMedia2::deleteFile()
+                            $product->deleteFile($base, $file, $useStorage);
+                        } catch (\Throwable $e) {}
+                    }
+
+                    $m->delete();
+                }
+            }
+        } catch (\Throwable $e) {
+            // continue deletion
+        }
+
+        // Clean pivots just in case
+        try { $product->sections()->detach(); } catch (\Throwable $e) {}
+        try { $product->tags()->detach(); } catch (\Throwable $e) {}
+
+        $product->delete();
+
+        $this->flushWebsiteProductCaches();
+
+        return redirect()
+            ->route('admin.public_products.index', ['status' => 'all'])
+            ->with('success', 'تم حذف الطلب ✅');
+    }
 }
 

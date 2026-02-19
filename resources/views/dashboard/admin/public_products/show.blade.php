@@ -20,6 +20,15 @@
             <h3 class="card-title">{{ $pageTitle }}</h3>
             <div class="card-toolbar">
                 <a href="{{ route('admin.public_products.index') }}" class="btn btn-sm btn-light">رجوع</a>
+                <form method="POST" action="{{ route('admin.public_products.destroy', $product) }}" class="d-inline-block ms-2">
+                    @csrf
+                    @method('DELETE')
+                    <input type="hidden" name="confirm" value="DELETE">
+                    <button type="button" class="btn btn-sm btn-danger"
+                            onclick="const v=prompt('اكتب DELETE لتأكيد حذف هذا الطلب'); if(v==='DELETE'){ this.form.submit(); }">
+                        حذف
+                    </button>
+                </form>
             </div>
         </div>
 
@@ -85,27 +94,78 @@
                     <div class="p-4 border rounded">
                         <div class="fw-bold mb-3">الصور</div>
 
-                        @if(!empty($mainImage))
-                            <div class="mb-3">
-                                <div class="text-muted mb-2">الصورة الرئيسية</div>
-                                <a href="{{ $mainImage }}" target="_blank">
-                                    <img src="{{ $mainImage }}" class="img-fluid rounded border" alt="Main">
-                                </a>
-                            </div>
-                        @endif
+                        @php
+                            $slides = [];
+                            if (!empty($mainImage)) {
+                                $slides[] = [
+                                    'label' => 'الصورة الرئيسية',
+                                    'url' => $mainImage,
+                                ];
+                            }
+                            if (!empty($galleryImages) && count($galleryImages) > 0) {
+                                foreach ($galleryImages as $idx => $img) {
+                                    $slides[] = [
+                                        'label' => 'صورة المعرض #' . ((int) $idx + 1),
+                                        'url' => (string) ($img['original'] ?? ''),
+                                    ];
+                                }
+                            }
+                        @endphp
 
-                        @if(!empty($galleryImages) && count($galleryImages) > 0)
-                            <div class="text-muted mb-2">صور المعرض</div>
-                            <div class="d-flex flex-wrap gap-2">
-                                @foreach($galleryImages as $img)
-                                    <a href="{{ $img['original'] ?? '#' }}" target="_blank">
-                                    <img src="{{ $img['thumbnail'] ?? ($img['original'] ?? '') }}"
-                                         onerror="this.onerror=null;this.src='{{ $img['original'] ?? '' }}';"
-                                         style="width: 86px; height: 86px; object-fit: cover"
-                                         class="rounded border" alt="Gallery">
-                                    </a>
-                                @endforeach
+                        @if(count($slides) > 0)
+                            <div id="publicProductImagesCarousel" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-indicators">
+                                    @foreach($slides as $i => $s)
+                                        <button type="button"
+                                                data-bs-target="#publicProductImagesCarousel"
+                                                data-bs-slide-to="{{ $i }}"
+                                                class="{{ $i === 0 ? 'active' : '' }}"
+                                                aria-current="{{ $i === 0 ? 'true' : 'false' }}"
+                                                aria-label="Slide {{ $i + 1 }}"></button>
+                                    @endforeach
+                                </div>
+
+                                <div class="carousel-inner rounded border bg-light" style="min-height: 280px;">
+                                    @foreach($slides as $i => $s)
+                                        <div class="carousel-item {{ $i === 0 ? 'active' : '' }}">
+                                            <a href="{{ $s['url'] }}" target="_blank" class="d-block w-100">
+                                                <img src="{{ $s['url'] }}"
+                                                     class="d-block w-100"
+                                                     alt="Slide"
+                                                     style="max-height: 520px; object-fit: contain; background: #f8f9fa;"
+                                                     onerror="this.onerror=null;this.style.display='none';">
+                                            </a>
+                                            <div class="carousel-caption d-none d-md-block">
+                                                <span class="badge badge-light-dark">{{ $s['label'] }}</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                @if(count($slides) > 1)
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#publicProductImagesCarousel" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#publicProductImagesCarousel" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
+                                @endif
                             </div>
+
+                            <div class="mt-3 d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-sm btn-light"
+                                        onclick="try{ document.querySelector('#publicProductImagesCarousel .carousel-control-prev')?.click(); }catch(e){}">
+                                    السابق
+                                </button>
+                                <button type="button" class="btn btn-sm btn-light"
+                                        onclick="try{ document.querySelector('#publicProductImagesCarousel .carousel-control-next')?.click(); }catch(e){}">
+                                    التالي
+                                </button>
+                            </div>
+                        @else
+                            <div class="text-muted">لا توجد صور.</div>
                         @endif
                     </div>
                 </div>

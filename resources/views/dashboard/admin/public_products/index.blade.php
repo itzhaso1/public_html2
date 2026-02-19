@@ -43,6 +43,7 @@
                         <th>الحالة</th>
                         <th>تاريخ</th>
                         <th>فتح</th>
+                        <th>حذف</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -64,9 +65,20 @@
                             <td>
                                 <a class="btn btn-sm btn-light btn-active-primary" href="{{ route('admin.public_products.show', $p) }}">تفاصيل</a>
                             </td>
+                            <td>
+                                <form method="POST" action="{{ route('admin.public_products.destroy', $p) }}" class="d-inline-block">
+                                    @csrf
+                                    @method('DELETE')
+                                    <input type="hidden" name="confirm" value="DELETE">
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            onclick="const v=prompt('اكتب DELETE لتأكيد حذف هذا الطلب'); if(v==='DELETE'){ this.form.submit(); }">
+                                        حذف
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="text-center text-muted py-6">لا توجد طلبات.</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-6">لا توجد طلبات.</td></tr>
                     @endforelse
                     </tbody>
                 </table>
