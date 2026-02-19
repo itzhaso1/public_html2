@@ -5,14 +5,42 @@ namespace App\Http\Controllers\Website;
 use App\Http\Controllers\Controller;
 use App\Models\CashExchangeOffer;
 use App\Models\CashExchangeRequest;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Support\WhatsApp\WhatsAppNumber;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class CashExchangeController extends Controller
 {
+    private function isEnabled(): bool
+    {
+        try {
+            if (!Schema::hasTable('settings') || !Schema::hasColumn('settings', 'cash_exchange_enabled')) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+            return true;
+        }
+
+        try {
+            $settings = Cache::get('app_settings');
+            if (!$settings) {
+                $settings = Setting::query()->latest()->first();
+            }
+            return (bool) ($settings?->cash_exchange_enabled ?? true);
+        } catch (\Throwable $e) {
+            return true;
+        }
+    }
+
     public function index()
     {
+        if (! $this->isEnabled()) {
+            return redirect()->route('home')->with('error', 'خدمة استبدال الرصيد غير متاحة حالياً.');
+        }
+
         $offers = CashExchangeOffer::query()
             ->where('enabled', true)
             ->orderBy('sort_order')
@@ -27,6 +55,10 @@ class CashExchangeController extends Controller
 
     public function store(Request $request)
     {
+        if (! $this->isEnabled()) {
+            return back()->withErrors(['error' => 'خدمة استبدال الرصيد غير متاحة حالياً.'])->withInput();
+        }
+
         $data = $request->validate([
             'offer_id' => ['required', 'integer', 'exists:cash_exchange_offers,id'],
             'card_code' => ['required', 'string', 'min:3', 'max:500'],

@@ -55,15 +55,26 @@
                 <div class="font-extrabold text-gray-900">أكواد ملابس</div>
                 <div class="text-xs text-gray-500 mt-1">شراء أكواد جاهزة للتسليم.</div>
             </a>
-            <a href="{{ route('website.cash_exchange.index') }}"
-               class="rounded-2xl border border-gray-200 bg-white p-4 hover:bg-gray-50 transition">
+            @php
+                $cashEnabled = (bool) ($cashExchangeEnabled ?? ($settings?->cash_exchange_enabled ?? true));
+                $moneyEnabled = (bool) ($moneyExchangeEnabled ?? false);
+            @endphp
+
+            <a href="{{ $cashEnabled ? route('website.cash_exchange.index') : 'javascript:void(0)' }}"
+               class="rounded-2xl border border-gray-200 bg-white p-4 hover:bg-gray-50 transition {{ $cashEnabled ? '' : 'opacity-60 cursor-not-allowed pointer-events-none' }}">
                 <div class="font-extrabold text-gray-900">استبدل رصيدك كاش</div>
                 <div class="text-xs text-gray-500 mt-1">ارسل كود البطاقة واستلم كاش.</div>
+                @unless($cashEnabled)
+                    <div class="mt-2 text-xs font-extrabold text-emerald-700">غير متاح حالياً</div>
+                @endunless
             </a>
-            <a href="{{ route('website.money_exchange.index') }}"
-               class="rounded-2xl border border-gray-200 bg-white p-4 hover:bg-gray-50 transition">
+            <a href="{{ $moneyEnabled ? route('website.money_exchange.index') : 'javascript:void(0)' }}"
+               class="rounded-2xl border border-gray-200 bg-white p-4 hover:bg-gray-50 transition {{ $moneyEnabled ? '' : 'opacity-60 cursor-not-allowed pointer-events-none' }}">
                 <div class="font-extrabold text-gray-900">تحويل الأموال / تبادل العملات</div>
                 <div class="text-xs text-gray-500 mt-1">تحويل SAR ↔ USDT حسب الصرف.</div>
+                @unless($moneyEnabled)
+                    <div class="mt-2 text-xs font-extrabold text-purple-700">غير متاح حالياً</div>
+                @endunless
             </a>
         </div>
     </div>

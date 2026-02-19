@@ -161,6 +161,14 @@
                                     <input type="text" class="form-control" name="home_quick_cash_exchange_title"
                                            value="{{ old('home_quick_cash_exchange_title', $setting?->home_quick_cash_exchange_title) }}"
                                            placeholder="استبدل رصيدك كاش">
+                                    @if(\Illuminate\Support\Facades\Schema::hasColumn('settings', 'cash_exchange_enabled'))
+                                        <div class="form-check form-switch mt-3">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                   id="cash_exchange_enabled" name="cash_exchange_enabled" value="1"
+                                                   {{ old('cash_exchange_enabled', (bool)($setting?->cash_exchange_enabled ?? true)) ? 'checked' : '' }}>
+                                            <label class="form-check-label fw-bold" for="cash_exchange_enabled">الخدمة متاحة حالياً</label>
+                                        </div>
+                                    @endif
                                     <div class="mt-2">
                                         <label class="form-label fw-bold">الصورة</label>
                                         <input class="form-control" type="file" name="home_quick_cash_exchange_image" accept="image/*">

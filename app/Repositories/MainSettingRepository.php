@@ -50,6 +50,12 @@ class MainSettingRepository implements MainSettingInterface
             } catch (\Throwable $e) {
                 $hasHomeQuick = false;
             }
+            $hasCashToggle = false;
+            try {
+                $hasCashToggle = Schema::hasColumn('settings', 'cash_exchange_enabled');
+            } catch (\Throwable $e) {
+                $hasCashToggle = false;
+            }
 
             $setting = Setting::firstOrNew([]);
             $fields = [
@@ -72,8 +78,15 @@ class MainSettingRepository implements MainSettingInterface
                     'home_quick_money_exchange_title',
                 ]);
             }
+            if ($hasCashToggle) {
+                $fields[] = 'cash_exchange_enabled';
+            }
 
             $setting->fill($request->only($fields));
+            if ($hasCashToggle) {
+                // checkbox => set false when unchecked
+                $setting->cash_exchange_enabled = $request->boolean('cash_exchange_enabled');
+            }
             $setting->save();
             if ($request->hasFile('logo'))
                 $setting->updateSingleMedia('setting', $request->file('logo'), $setting, null, 'media', true, false, 'logo');

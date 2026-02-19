@@ -275,6 +275,7 @@ if ($request->hasFile('video')) {
             'brand_id',
             'type_id',
             'price_before_discount',
+            'deal_ends_at',
             'price',
             'stock',
             'sku',

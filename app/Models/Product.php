@@ -18,6 +18,7 @@ class Product extends Model implements TranslatableContract {
         'brand_id',
         'price',
         'price_before_discount',
+        'deal_ends_at',
         'stock',
         'sku',
         'featured',
@@ -42,6 +43,7 @@ class Product extends Model implements TranslatableContract {
     protected $casts = [
         'featured' => 'bool',
         'published_at' => 'datetime',
+        'deal_ends_at' => 'datetime',
         'reviewed_at' => 'datetime',
         'rejected_at' => 'datetime',
         'review_reject_reasons' => 'array',

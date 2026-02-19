@@ -108,6 +108,9 @@
             $codesImg = $settings?->getMediaUrl('setting', $settings, null, 'media', 'home_quick_codes') ?: $defaultQuickImg;
             $cashImg = $settings?->getMediaUrl('setting', $settings, null, 'media', 'home_quick_cash_exchange') ?: null;
             $moneyImg = $settings?->getMediaUrl('setting', $settings, null, 'media', 'home_quick_money_exchange') ?: null;
+
+            $cashEnabled = (bool) ($cashExchangeEnabled ?? ($settings?->cash_exchange_enabled ?? true));
+            $moneyEnabled = (bool) ($moneyExchangeEnabled ?? false);
         @endphp
 
         <!-- شحن جواهر -->
@@ -171,8 +174,8 @@
         </a>
 
         <!-- استبدل رصيدك كاش -->
-        <a href="{{ route('website.cash_exchange.index') }}"
-           class="group relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-l from-emerald-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
+        <a href="{{ $cashEnabled ? route('website.cash_exchange.index') : 'javascript:void(0)' }}"
+           class="group relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-l from-emerald-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99] {{ $cashEnabled ? '' : 'opacity-60 cursor-not-allowed pointer-events-none' }}">
             <div class="p-2.5 sm:p-4">
                 <div class="flex items-center justify-center">
                     @if($cashImg)
@@ -202,11 +205,19 @@
                     </span>
                 </div>
             </div>
+
+            @unless($cashEnabled)
+                <div class="absolute inset-0 bg-white/70 flex items-center justify-center">
+                    <span class="rounded-full bg-emerald-700 text-white text-xs font-extrabold px-3 py-1.5 shadow">
+                        غير متاح حالياً
+                    </span>
+                </div>
+            @endunless
         </a>
 
         <!-- تحويل الأموال / تبادل العملات -->
-        <a href="{{ route('website.money_exchange.index') }}"
-           class="group relative overflow-hidden rounded-2xl border border-purple-200 bg-gradient-to-l from-purple-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
+        <a href="{{ $moneyEnabled ? route('website.money_exchange.index') : 'javascript:void(0)' }}"
+           class="group relative overflow-hidden rounded-2xl border border-purple-200 bg-gradient-to-l from-purple-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99] {{ $moneyEnabled ? '' : 'opacity-60 cursor-not-allowed pointer-events-none' }}">
             <div class="p-2.5 sm:p-4">
                 <div class="flex items-center justify-center">
                     @if($moneyImg)
@@ -236,6 +247,14 @@
                     </span>
                 </div>
             </div>
+
+            @unless($moneyEnabled)
+                <div class="absolute inset-0 bg-white/70 flex items-center justify-center">
+                    <span class="rounded-full bg-purple-700 text-white text-xs font-extrabold px-3 py-1.5 shadow">
+                        غير متاح حالياً
+                    </span>
+                </div>
+            @endunless
         </a>
 
     </div>
@@ -257,9 +276,17 @@
                     $productImage = $imageUrl ?: ($thumbUrl ?: $fallbackImage);
                     $isSold = (bool) ($product->featured ?? false);
                     $discountPercent = null;
+                    $dealEndsAt = $product->deal_ends_at ?? null;
 
                     if (!empty($product->price_before_discount) && $product->price_before_discount > 0) {
                         $discountPercent = round((($product->price_before_discount - $product->price) / $product->price_before_discount) * 100);
+                    }
+
+                    $hasCountdown = false;
+                    try {
+                        $hasCountdown = (! $isSold) && ($discountPercent > 0) && $dealEndsAt && $dealEndsAt->isFuture();
+                    } catch (\Throwable $e) {
+                        $hasCountdown = false;
                     }
                 @endphp
 
@@ -273,6 +300,13 @@
                     @if(!$isSold && !empty($discountPercent) && $discountPercent > 0)
                         <div class="absolute top-2 right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded shadow">
                             خصم {{ $discountPercent }}%
+                        </div>
+                    @endif
+
+                    @if($hasCountdown)
+                        <div class="deal-countdown-wrap absolute top-9 left-1/2 -translate-x-1/2 bg-black/85 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow">
+                            ⏳ ينتهي خلال:
+                            <span class="deal-countdown font-mono" data-ends="{{ $dealEndsAt->toIso8601String() }}">--:--:--</span>
                         </div>
                     @endif
 
@@ -333,9 +367,17 @@
                 $productImage = $imageUrl ?: $fallbackImage;
                 $isSold = (bool) ($product->featured ?? false);
                 $discountPercent = null;
+                $dealEndsAt = $product->deal_ends_at ?? null;
 
                 if (!empty($product->price_before_discount) && $product->price_before_discount > 0) {
                     $discountPercent = round((($product->price_before_discount - $product->price) / $product->price_before_discount) * 100);
+                }
+
+                $hasCountdown = false;
+                try {
+                    $hasCountdown = (! $isSold) && ($discountPercent > 0) && $dealEndsAt && $dealEndsAt->isFuture();
+                } catch (\Throwable $e) {
+                    $hasCountdown = false;
                 }
             @endphp
 
@@ -351,6 +393,13 @@
                 @if(!$isSold && !empty($discountPercent) && $discountPercent > 0)
                     <div class="absolute top-2 right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded shadow">
                         خصم {{ $discountPercent }}%
+                    </div>
+                @endif
+
+                @if($hasCountdown)
+                    <div class="deal-countdown-wrap absolute top-9 left-1/2 -translate-x-1/2 bg-black/85 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow">
+                        ⏳ ينتهي خلال:
+                        <span class="deal-countdown font-mono" data-ends="{{ $dealEndsAt->toIso8601String() }}">--:--:--</span>
                     </div>
                 @endif
 
@@ -466,6 +515,44 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const els = Array.from(document.querySelectorAll('.deal-countdown[data-ends]'));
+    if (!els.length) return;
+
+    const pad2 = (n) => String(Math.max(0, n)).padStart(2, '0');
+    const format = (sec) => {
+        sec = Math.max(0, Math.floor(sec));
+        const d = Math.floor(sec / 86400);
+        sec = sec % 86400;
+        const h = Math.floor(sec / 3600);
+        sec = sec % 3600;
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        if (d > 0) return `${d}ي ${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+        return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+    };
+
+    const tick = () => {
+        const now = Date.now();
+        for (const el of els) {
+            const ends = Date.parse(el.getAttribute('data-ends') || '');
+            if (!ends || Number.isNaN(ends)) continue;
+            const diffSec = Math.floor((ends - now) / 1000);
+            if (diffSec <= 0) {
+                const wrap = el.closest('.deal-countdown-wrap');
+                if (wrap) wrap.remove();
+                continue;
+            }
+            el.textContent = format(diffSec);
+        }
+    };
+
+    tick();
+    setInterval(tick, 1000);
 });
 </script>
 @endpush

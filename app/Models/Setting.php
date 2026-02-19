@@ -25,6 +25,7 @@ class Setting extends Model
         'home_quick_codes_title',
         'home_quick_cash_exchange_title',
         'home_quick_money_exchange_title',
+        'cash_exchange_enabled',
     ];
 
     public function media()

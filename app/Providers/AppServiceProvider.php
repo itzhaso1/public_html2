@@ -6,6 +6,7 @@ use App\Models\CashExchangeRequest;
 use App\Models\Category;
 use App\Models\ManualPaymentRequest;
 use App\Models\MoneyExchangeRequest;
+use App\Models\MoneyExchangeSetting;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Observers\NewDashboardRequestWhatsAppObserver;
@@ -37,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
                         'settings' => $settings,
                         'logo' => $logo,
                         'favicon' => $favicon,
+                        'cashExchangeEnabled' => (bool) ($settings->cash_exchange_enabled ?? true),
                     ]);
                 }
             }
@@ -65,6 +67,21 @@ class AppServiceProvider extends ServiceProvider
                 $categories = collect();
             }
 
+            $moneyExchangeEnabled = false;
+            try {
+                if (Schema::hasTable('money_exchange_settings')) {
+                    $moneyExchangeEnabled = Cache::remember('money_exchange.enabled', 60 * 5, function () {
+                        /** @var MoneyExchangeSetting|null $s */
+                        $s = MoneyExchangeSetting::query()->latest('id')->first();
+                        if (! $s || ! $s->enabled) return false;
+                        if (empty($s->sar_per_usdt) || empty($s->usdt_to_sar_rate)) return false;
+                        return true;
+                    });
+                }
+            } catch (\Throwable $e) {
+                $moneyExchangeEnabled = false;
+            }
+
             $view->with([
                 'categories' => $categories,
                 'currencyRatesByCountry' => $ratesByCountry,
@@ -73,6 +90,7 @@ class AppServiceProvider extends ServiceProvider
                     'date' => $fx['date'] ?? null,
                     'source' => $fx['source'] ?? null,
                 ],
+                'moneyExchangeEnabled' => (bool) $moneyExchangeEnabled,
             ]);
         });
 

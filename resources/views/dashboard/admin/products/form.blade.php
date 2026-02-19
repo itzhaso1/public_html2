@@ -134,6 +134,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <div class="form-group mb-3">
+                        <label>عداد الخصم (اختياري)</label>
+                        @php
+                            $dealEndsValue = old('deal_ends_at');
+                            if ($dealEndsValue === null && isset($product) && !empty($product->deal_ends_at)) {
+                                try {
+                                    $dealEndsValue = $product->deal_ends_at->format('Y-m-d\TH:i');
+                                } catch (\Throwable $e) {
+                                    $dealEndsValue = '';
+                                }
+                            }
+                        @endphp
+                        <input type="datetime-local" name="deal_ends_at" class="form-control"
+                               value="{{ $dealEndsValue ?? '' }}">
+                        <small class="text-muted">إذا حطيت وقت انتهاء، سيظهر عدّاد فوق المنتج في الصفحة الرئيسية عند وجود خصم.</small>
+                    </div>
+
+                    <div class="form-group mb-3">
                         <label>السعر</label>
                         <input type="number" step="0.01" name="price" class="form-control"
                             value="{{ old('price', $product->price ?? '') }}">
