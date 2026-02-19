@@ -99,7 +99,10 @@
                             <div class="d-flex flex-wrap gap-2">
                                 @foreach($galleryImages as $img)
                                     <a href="{{ $img['original'] ?? '#' }}" target="_blank">
-                                        <img src="{{ $img['thumbnail'] ?? ($img['original'] ?? '') }}" style="width: 86px; height: 86px; object-fit: cover" class="rounded border" alt="Gallery">
+                                    <img src="{{ $img['thumbnail'] ?? ($img['original'] ?? '') }}"
+                                         onerror="this.onerror=null;this.src='{{ $img['original'] ?? '' }}';"
+                                         style="width: 86px; height: 86px; object-fit: cover"
+                                         class="rounded border" alt="Gallery">
                                     </a>
                                 @endforeach
                             </div>
