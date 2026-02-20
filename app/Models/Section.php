@@ -21,6 +21,8 @@ class Section extends Model implements TranslatableContract
     public function products()
     {
         return $this->belongsToMany(Product::class, 'product_section')
-            ->websiteVisible();
+            ->websiteVisible()
+            ->orderByDesc('price')
+            ->orderByDesc('id');
     }
 }

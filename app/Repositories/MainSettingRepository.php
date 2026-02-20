@@ -56,6 +56,12 @@ class MainSettingRepository implements MainSettingInterface
             } catch (\Throwable $e) {
                 $hasCashToggle = false;
             }
+            $hasMoneyToggle = false;
+            try {
+                $hasMoneyToggle = Schema::hasColumn('settings', 'money_exchange_enabled');
+            } catch (\Throwable $e) {
+                $hasMoneyToggle = false;
+            }
 
             $setting = Setting::firstOrNew([]);
             $fields = [
@@ -81,11 +87,17 @@ class MainSettingRepository implements MainSettingInterface
             if ($hasCashToggle) {
                 $fields[] = 'cash_exchange_enabled';
             }
+            if ($hasMoneyToggle) {
+                $fields[] = 'money_exchange_enabled';
+            }
 
             $setting->fill($request->only($fields));
             if ($hasCashToggle) {
                 // checkbox => set false when unchecked
                 $setting->cash_exchange_enabled = $request->boolean('cash_exchange_enabled');
+            }
+            if ($hasMoneyToggle) {
+                $setting->money_exchange_enabled = $request->boolean('money_exchange_enabled');
             }
             $setting->save();
             if ($request->hasFile('logo'))

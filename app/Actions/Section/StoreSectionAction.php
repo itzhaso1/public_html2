@@ -65,8 +65,8 @@ class StoreSectionAction {
         }
 
         foreach ($locales as $locale) {
-            Cache::forget("home.sections.$locale");
-            Cache::forget("home.products.$locale");
+            Cache::forget("home.sections.v2.$locale");
+            Cache::forget("home.products.v2.$locale");
         }
     }
 }

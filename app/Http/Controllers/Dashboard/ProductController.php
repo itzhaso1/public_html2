@@ -202,8 +202,8 @@ class ProductController extends Controller
 
         // Clear relevant caches
         foreach (['ar', 'en'] as $locale) {
-            Cache::forget("home.products.$locale");
-            Cache::forget("home.sections.$locale");
+            Cache::forget("home.products.v2.$locale");
+            Cache::forget("home.sections.v2.$locale");
             Cache::forget("diamonds.charge.$locale");
             Cache::forget("diamonds.codes.$locale");
         }

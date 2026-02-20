@@ -19,7 +19,7 @@ class DiamondCodeController extends Controller
         foreach (['ar', 'en'] as $locale) {
             Cache::forget("diamonds.codes.$locale");
             // Codes products may appear inside home sections; refresh thumbnails immediately.
-            Cache::forget("home.sections.$locale");
+            Cache::forget("home.sections.v2.$locale");
         }
     }
 

@@ -5,14 +5,42 @@ namespace App\Http\Controllers\Website;
 use App\Http\Controllers\Controller;
 use App\Models\MoneyExchangeRequest;
 use App\Models\MoneyExchangeSetting;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Support\WhatsApp\WhatsAppNumber;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class MoneyExchangeController extends Controller
 {
+    private function isEnabledByMainSettings(): bool
+    {
+        try {
+            if (!Schema::hasTable('settings') || !Schema::hasColumn('settings', 'money_exchange_enabled')) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+            return true;
+        }
+
+        try {
+            $settings = Cache::get('app_settings');
+            if (!$settings) {
+                $settings = Setting::query()->latest()->first();
+            }
+            return (bool) ($settings?->money_exchange_enabled ?? true);
+        } catch (\Throwable $e) {
+            return true;
+        }
+    }
+
     private function getSettings(): ?MoneyExchangeSetting
     {
+        if (! $this->isEnabledByMainSettings()) {
+            return null;
+        }
+
         /** @var MoneyExchangeSetting|null $s */
         $s = MoneyExchangeSetting::query()->latest('id')->first();
         if (! $s || ! $s->enabled || empty($s->sar_per_usdt) || empty($s->usdt_to_sar_rate)) {

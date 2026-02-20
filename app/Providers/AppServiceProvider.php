@@ -67,6 +67,28 @@ class AppServiceProvider extends ServiceProvider
                 $categories = collect();
             }
 
+            $settings = null;
+            try {
+                if (Schema::hasTable('settings')) {
+                    $settings = Cache::get('app_settings') ?: Setting::with('media')->latest()->first();
+                }
+            } catch (\Throwable $e) {
+                $settings = null;
+            }
+
+            $cashToggle = true;
+            $moneyToggle = true;
+            try {
+                if ($settings && Schema::hasColumn('settings', 'cash_exchange_enabled')) {
+                    $cashToggle = (bool) ($settings->cash_exchange_enabled ?? true);
+                }
+                if ($settings && Schema::hasColumn('settings', 'money_exchange_enabled')) {
+                    $moneyToggle = (bool) ($settings->money_exchange_enabled ?? true);
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
+
             $moneyExchangeEnabled = false;
             try {
                 if (Schema::hasTable('money_exchange_settings')) {
@@ -90,7 +112,8 @@ class AppServiceProvider extends ServiceProvider
                     'date' => $fx['date'] ?? null,
                     'source' => $fx['source'] ?? null,
                 ],
-                'moneyExchangeEnabled' => (bool) $moneyExchangeEnabled,
+                'cashExchangeEnabled' => (bool) $cashToggle,
+                'moneyExchangeEnabled' => (bool) ($moneyToggle && $moneyExchangeEnabled),
             ]);
         });
 
