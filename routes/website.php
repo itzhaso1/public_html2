@@ -73,7 +73,7 @@ Route::group(
                          (select count(*) from manual_payment_requests mpr where mpr.product_id = products.id and mpr.status = ?)',
                         ['available', 'pending']
                     )
-                    ->with(['media', 'translations'])
+                    ->with(['media', 'translations', 'codeThumbnail'])
                     ->get();
             });
 
@@ -87,8 +87,40 @@ Route::group(
         Route::post('diamonds/{product}/manual-payment', [Website\ManualPaymentController::class, 'store'])
             ->middleware('auth')
             ->name('website.diamonds.manual_payment.store');
+        Route::post('diamonds/check-player', [Website\ManualPaymentController::class, 'checkPlayerName'])
+            ->middleware(['auth', 'throttle:5,1'])
+            ->name('website.diamonds.check_player');
         Route::get('diamonds/manual-payment/thanks/{reference}', [Website\ManualPaymentController::class, 'thanks'])
             ->name('website.diamonds.manual_payment.thanks');
+
+        // ===============================
+        // Cash Exchange (استبدل رصيدك كاش)
+        // ===============================
+        Route::get('cash-exchange', [Website\CashExchangeController::class, 'index'])
+            ->middleware('auth')
+            ->name('website.cash_exchange.index');
+        Route::post('cash-exchange', [Website\CashExchangeController::class, 'store'])
+            ->middleware('auth')
+            ->name('website.cash_exchange.store');
+        Route::get('cash-exchange/thanks/{reference}', [Website\CashExchangeController::class, 'thanks'])
+            ->middleware('auth')
+            ->name('website.cash_exchange.thanks');
+        Route::get('cash-exchange/requests/{reference}', [Website\CashExchangeController::class, 'show'])
+            ->middleware('auth')
+            ->name('website.cash_exchange.show');
+
+        // ===============================
+        // Money Exchange (تحويل الأموال / تبادل العملات)
+        // ===============================
+        Route::get('money-exchange', [Website\MoneyExchangeController::class, 'index'])
+            ->middleware('auth')
+            ->name('website.money_exchange.index');
+        Route::post('money-exchange', [Website\MoneyExchangeController::class, 'store'])
+            ->middleware('auth')
+            ->name('website.money_exchange.store');
+        Route::get('money-exchange/thanks/{reference}', [Website\MoneyExchangeController::class, 'thanks'])
+            ->middleware('auth')
+            ->name('website.money_exchange.thanks');
  
         // ===============================
         // Website pages
@@ -110,6 +142,7 @@ Route::group(
         // ===============================
         Route::get('publish-product', [PublicProductController::class, 'create'])->name('public.products.create');
         Route::post('publish-product', [PublicProductController::class, 'store'])->name('public.products.store');
+        Route::get('publish-product/requests/{slug}', [PublicProductController::class, 'track'])->name('public.products.track');
  
         // ===============================
         // Customer dashboard
@@ -125,6 +158,10 @@ Route::group(
             Route::get('profile', [Customer\ProfileController::class, 'edit'])->name('profile');
             Route::post('profile', [Customer\ProfileController::class, 'update'])->name('profile.update');
             Route::post('profile/password', [Customer\ProfileController::class, 'updatePassword'])->name('profile.password');
+
+            // Money exchange tracking
+            Route::get('money-exchange', [Website\MoneyExchangeController::class, 'list'])->name('money_exchange.index');
+            Route::get('money-exchange/{reference}', [Website\MoneyExchangeController::class, 'show'])->name('money_exchange.show');
             
             
         });

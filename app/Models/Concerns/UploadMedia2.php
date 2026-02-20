@@ -8,6 +8,17 @@ use Illuminate\Http\UploadedFile;
 use Intervention\Image\Facades\Image;
 
 trait UploadMedia2 {
+    private function publicUploadsUrl(string $disk, string $uploadsPath): string
+    {
+        $uploadsPath = ltrim($uploadsPath, '/');
+        if ($disk === 'storage_public') {
+            // On shared hosting this project is often served from the repo root,
+            // so public assets are under /public and the storage symlink is /public/storage.
+            return asset("public/storage/{$uploadsPath}");
+        }
+        // direct_public (or unknown) => /public/uploads/...
+        return asset("public/{$uploadsPath}");
+    }
     public function uploadSingleMedia(
         $baseFolder,
         UploadedFile $file,
@@ -195,11 +206,11 @@ trait UploadMedia2 {
     ): ?string {
         if (!$model) return null;
 
-        $base = 'public/' ."uploads/$baseFolder";
+        $uploadsBase = "uploads/$baseFolder";
         if ($column && in_array($column, $model->getFillable())) {
             $fileName = $model->{$column};
             if ($fileName) {
-                return asset("{$base}/{$fileName}");
+                return $this->publicUploadsUrl('direct_public', "{$uploadsBase}/{$fileName}");
             }
         }
         if ($relation && method_exists($model, $relation)) {
@@ -213,9 +224,9 @@ trait UploadMedia2 {
                 $disk = $media->disk;
 
                 if ($disk === 'direct_public') {
-                    return asset("{$base}/{$fileName}");
+                    return $this->publicUploadsUrl($disk, "{$uploadsBase}/{$fileName}");
                 } elseif ($disk === 'storage_public') {
-                    return asset("storage/{$base}/{$fileName}");
+                    return $this->publicUploadsUrl($disk, "{$uploadsBase}/{$fileName}");
                 }
             }
         }
@@ -327,7 +338,8 @@ trait UploadMedia2 {
 
             // إنشاء الصورة المصغرة
             if ($generateThumbnail) {
-                $this->generateThumbnail($image, $folderPath, $fileName, false);
+                // We save originals directly under public/uploads/... so thumbnails must be there too.
+                $this->generateThumbnail($image, $folderPath, $fileName, true);
             }
 
             // حفظ في قاعدة البيانات
@@ -406,7 +418,7 @@ trait UploadMedia2 {
             return [];
         }
 
-        $base = 'public/' ."uploads/$baseFolder";
+        $uploadsBase = "uploads/$baseFolder";
 
         // لو فيه relation
         if ($relation && method_exists($model, $relation)) {
@@ -420,10 +432,11 @@ trait UploadMedia2 {
 
             foreach ($mediaItems as $media) {
                 $fileName = $media->file_name;
+                $disk = (string) ($media->disk ?? 'direct_public');
 
                 $images[] = [
-                    'original'   => asset("{$base}/{$fileName}"),
-                    'thumbnail'  => asset("{$base}/thumbnails/{$fileName}"),
+                    'original'   => $this->publicUploadsUrl($disk, "{$uploadsBase}/{$fileName}"),
+                    'thumbnail'  => $this->publicUploadsUrl($disk, "{$uploadsBase}/thumbnails/{$fileName}"),
                 ];
             }
         }

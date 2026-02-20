@@ -1,7 +1,7 @@
 @extends('dashboard.layouts.master')
 
 @section('pageTitle')
-    {{ trans('dashboard/admin.product.products') }}
+    {{ $pageTitle ?? trans('dashboard/admin.product.products') }}
 @endsection
 
 @push('css')
@@ -167,16 +167,40 @@ div.dt-buttons{ display:none !important; }
 
             <div class="card-header product-header border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div class="card-title align-items-start flex-column m-0">
-                    <h3 class="fw-bolder mb-1 text-gradient product-title">المنتجات</h3>
+                    <h3 class="fw-bolder mb-1 text-gradient product-title">{{ $pageTitle ?? 'المنتجات' }}</h3>
                     <span class="text-muted fw-bold fs-7 product-subtitle">
-                        {{ trans('dashboard/admin.product.products') }} ( {{ \App\Models\Product::count() }} )
+                        {{ $pageTitle ?? trans('dashboard/admin.product.products') }} ( {{ $productsCount ?? \App\Models\Product::count() }} )
                     </span>
                 </div>
 
-                <a href="{{ route('admin.products.create') }}" class="btn btn-add-product">
-                    <i class="bi bi-plus-circle-fill fs-4"></i>
-                    <span>إضافة منتج جديد</span>
-                </a>
+                @php $group = $group ?? null; @endphp
+                <div class="d-flex flex-wrap gap-2 w-100 w-lg-auto">
+                    @if(in_array($group, ['accounts','charge','codes']))
+                        <form method="POST" action="{{ route('admin.products.bulk_delete', $group) }}" class="w-100 w-lg-auto bulk-delete-form">
+                            @csrf
+                            <button type="submit" class="btn btn-danger w-100 w-lg-auto">
+                                حذف {{ $pageTitle ?? 'المنتجات' }} دفعة واحدة
+                            </button>
+                        </form>
+                    @endif
+
+                    @if($group === 'charge')
+                        <a href="{{ route('admin.products.create_charge') }}" class="btn btn-add-product">
+                            <i class="bi bi-gem fs-4"></i>
+                            <span>إضافة باقة شحن</span>
+                        </a>
+                    @elseif($group === 'codes')
+                        <a href="{{ route('admin.diamond_codes.create') }}" class="btn btn-add-product">
+                            <i class="bi bi-plus-circle-fill fs-4"></i>
+                            <span>إضافة أكواد</span>
+                        </a>
+                    @else
+                        <a href="{{ route('admin.products.create') }}" class="btn btn-add-product">
+                            <i class="bi bi-plus-circle-fill fs-4"></i>
+                            <span>إضافة منتج جديد</span>
+                        </a>
+                    @endif
+                </div>
             </div>
 
             <div class="card-body py-4">
@@ -232,6 +256,26 @@ div.dt-buttons{ display:none !important; }
 $(function () {
     // يمسك نفس الجدول (بدون إعادة تهيئة)
     const table = $('#products-table').DataTable();
+
+    $(document).on('submit', '.bulk-delete-form', function (e) {
+        e.preventDefault();
+        const form = this;
+
+        Swal.fire({
+            title: 'تأكيد الحذف',
+            html: 'سيتم حذف المنتجات غير المرتبطة بطلبات/سلة/مبيعات فقط.<br><b>هذا الإجراء لا يمكن التراجع عنه.</b>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'نعم، احذف',
+            cancelButtonText: 'إلغاء'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    });
 
     $(document).on('click', '.btn-delete', function (e) {
         e.preventDefault();

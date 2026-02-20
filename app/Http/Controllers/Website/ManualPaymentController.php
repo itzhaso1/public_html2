@@ -11,9 +11,36 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Services\Integrations\Shop2TopUp\Shop2TopUpService;
+use Illuminate\Http\JsonResponse;
+use App\Support\WhatsApp\WhatsAppNumber;
 
 class ManualPaymentController extends Controller
 {
+    private function getEnabledPaymentMethods(): array
+    {
+        $methods = (array) config('bank.methods', []);
+        $enabled = [];
+
+        foreach ($methods as $key => $m) {
+            if (!is_array($m)) continue;
+            if (!($m['enabled'] ?? false)) continue;
+
+            // Binance method needs at least address or link configured
+            if ($key === 'binance_trc20') {
+                $addr = trim((string) ($m['address'] ?? ''));
+                $link = trim((string) ($m['link'] ?? ''));
+                if ($addr === '' && $link === '') {
+                    continue;
+                }
+            }
+
+            $enabled[$key] = $m;
+        }
+
+        return $enabled;
+    }
+
     private function forgetCodesPageCache(): void
     {
         foreach (['ar', 'en'] as $locale) {
@@ -55,6 +82,8 @@ class ManualPaymentController extends Controller
         return view('website.diamonds.manual_payment', [
             'product' => $product,
             'pageTitle' => 'الدفع اليدوي',
+            'paymentMethods' => $this->getEnabledPaymentMethods(),
+            'allowedChargeMethodKeys' => (array) config('bank.charge_method_keys', []),
         ]);
     }
 
@@ -68,8 +97,16 @@ class ManualPaymentController extends Controller
             if ($redirect) return $redirect;
         }
 
+        $paymentMethods = $this->getEnabledPaymentMethods();
+        $allowedKeys = array_keys($paymentMethods);
+        $isGems = ! $isCodes;
+        if ($isGems) {
+            $allowedKeys = array_values(array_intersect($allowedKeys, (array) config('bank.charge_method_keys', [])));
+        }
+
         $rules = [
             'receipt' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'payment_method' => ['required', 'string', 'in:' . implode(',', $allowedKeys)],
         ];
 
         // For gems top-up we need the player's ID. For codes we don't.
@@ -77,7 +114,35 @@ class ManualPaymentController extends Controller
             $rules['player_id'] = ['required', 'string', 'max:64'];
         }
 
+        $existingPhone = WhatsAppNumber::normalize($request->user()?->phone ?? '')
+            ?: WhatsAppNumber::normalize($request->user()?->profile?->phone ?? '');
+        // If no phone saved on account, require it so WhatsApp confirmation can be sent.
+        $rules['contact_phone'] = ['nullable', 'string', 'max:64'];
+        $rules['contact_phone_country'] = ['nullable', 'in:SA,JO'];
+        $rules['contact_phone_local'] = ['nullable', 'string', 'max:32'];
+
         $data = $request->validate($rules);
+
+        $contactPhone = WhatsAppNumber::normalize($data['contact_phone'] ?? '');
+        if ($contactPhone === '') {
+            $country = strtoupper(trim((string) ($data['contact_phone_country'] ?? '')));
+            $dial = $country === 'JO' ? '962' : '966';
+            $local = WhatsAppNumber::normalize($data['contact_phone_local'] ?? '');
+            $local = ltrim($local, '0');
+            $contactPhone = $dial . $local;
+        }
+        $contactPhone = WhatsAppNumber::normalize($contactPhone);
+
+        if ($existingPhone === '' && $contactPhone === '') {
+            return back()->withErrors(['contact_phone' => 'رقم الواتساب مطلوب لاستلام إشعار الطلب.'])->withInput();
+        }
+        if ($contactPhone !== '' && $existingPhone === '' && $request->user()) {
+            try {
+                $request->user()->update(['phone' => $contactPhone]);
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
 
         try {
             Storage::disk('public')->makeDirectory('manual-payments');
@@ -105,10 +170,11 @@ class ManualPaymentController extends Controller
             'user_id' => Auth::id(),
             // `player_id` is required for gems and not required for codes.
             'player_id' => $data['player_id'] ?? '-',
-            'contact_phone' => null,
+            'contact_phone' => $contactPhone !== '' ? $contactPhone : null,
             'contact_email' => null,
             'amount' => (float) $product->price,
             'currency' => 'SAR',
+            'payment_method' => $data['payment_method'],
             'receipt_path' => $receiptPath ?? null,
             'status' => 'pending',
             'ip' => $request->ip(),
@@ -121,6 +187,33 @@ class ManualPaymentController extends Controller
         }
 
         return redirect()->route('website.diamonds.manual_payment.thanks', ['reference' => $mpr->reference]);
+    }
+
+    public function checkPlayerName(Request $request): JsonResponse
+    {
+        abort_unless(config('bank.enabled'), 404);
+
+        $data = $request->validate([
+            'player_id' => ['required', 'string', 'min:3', 'max:64'],
+        ]);
+
+        $playerId = trim((string) $data['player_id']);
+        $cacheKey = 'shop2topup.player.' . sha1($playerId);
+
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && ($cached['success'] ?? false) === true) {
+            return response()->json(array_merge(['cached' => true], $cached));
+        }
+
+        $service = new Shop2TopUpService();
+        $res = $service->checkPlayer($playerId);
+
+        // Cache only successful lookups to reduce API calls and avoid freezes.
+        if (($res['success'] ?? false) === true && !empty($res['player_name'])) {
+            Cache::put($cacheKey, $res, now()->addHours(12));
+        }
+
+        return response()->json($res);
     }
 
     public function thanks(string $reference)

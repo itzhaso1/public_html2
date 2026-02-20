@@ -34,11 +34,14 @@ class WebsiteController extends Controller
         $categoryCount = $categories->count();
         $slidesPerView = $categoryCount < 10 ? $categoryCount : 10;
  
-        $sections = Cache::remember("home.sections.$locale", 60 * 5, function () {
+        $sections = Cache::remember("home.sections.v2.$locale", 60 * 5, function () {
             return Section::with([
                 'translations',
-                'products.translations',
-                'products.media',
+                'products' => function ($q) {
+                    $q->with(['translations', 'media', 'codeThumbnail'])
+                        ->orderByDesc('price')
+                        ->orderByDesc('id');
+                },
                 'categories.translations',
             ])
                 ->orderBy('order')
@@ -48,12 +51,13 @@ class WebsiteController extends Controller
         $sectionProductIds = $sections->pluck('products')->flatten()->pluck('id')->unique();
         
         // تعديل بسيط: إخفاء منتجات الشحن من الصفحة الرئيسية أيضاً
-        $products = Cache::remember("home.products.$locale", 60 * 5, function () use ($sectionProductIds) {
+        $products = Cache::remember("home.products.v2.$locale", 60 * 5, function () use ($sectionProductIds) {
             return Product::with(['translations', 'media'])
                 ->where('status', 'published')
                 ->whereNotIn('id', $sectionProductIds)
                 ->whereNull('service_type') // ✅ إخفاء الجواهر من هنا
-                ->latest()
+                ->orderByDesc('price')
+                ->orderByDesc('id')
                 ->get();
         });
             
@@ -73,6 +77,11 @@ class WebsiteController extends Controller
  
     public function show(Product $product)
     {
+        // Hide unapproved public submissions from direct links.
+        if (($product->publish_source ?? null) === 'public' && (string) ($product->status ?? 'draft') !== 'published') {
+            abort(404);
+        }
+
         // ============================================================
         // ✅ التعديل الجديد: توجيه منتجات الشحن لصفحة خاصة
         // ============================================================

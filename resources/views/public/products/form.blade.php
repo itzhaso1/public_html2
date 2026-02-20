@@ -154,15 +154,51 @@
             <!-- STEP 4 -->
             <div class="step hidden" data-step="4">
                 <div>
-                    <label class="text-sm text-gray-600">رقم هاتفك</label>
-                    <input
-                        type="text"
-                        name="client_number"
-                        value="{{ old('client_number', $product->client_number ?? '') }}"
-                        class="mt-2 w-full rounded-2xl border border-gray-300 bg-gray-50
-                               px-4 py-5 text-lg
-                               focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    >
+                    <label class="text-sm text-gray-600">رقم الواتساب</label>
+
+                    <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <select id="clientDial" name="client_dial"
+                                class="w-full rounded-2xl border border-gray-300 bg-gray-50 px-4 py-5 text-base focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="962">🇯🇴 الأردن (+962)</option>
+                            <option value="966">🇸🇦 السعودية (+966)</option>
+                            <option value="971">🇦🇪 الإمارات (+971)</option>
+                            <option value="965">🇰🇼 الكويت (+965)</option>
+                            <option value="974">🇶🇦 قطر (+974)</option>
+                            <option value="973">🇧🇭 البحرين (+973)</option>
+                            <option value="968">🇴🇲 عُمان (+968)</option>
+                            <option value="20">🇪🇬 مصر (+20)</option>
+                            <option value="964">🇮🇶 العراق (+964)</option>
+                            <option value="961">🇱🇧 لبنان (+961)</option>
+                            <option value="970">🇵🇸 فلسطين (+970)</option>
+                            <option value="967">🇾🇪 اليمن (+967)</option>
+                            <option value="963">🇸🇾 سوريا (+963)</option>
+                            <option value="212">🇲🇦 المغرب (+212)</option>
+                            <option value="216">🇹🇳 تونس (+216)</option>
+                            <option value="213">🇩🇿 الجزائر (+213)</option>
+                            <option value="218">🇱🇾 ليبيا (+218)</option>
+                            <option value="249">🇸🇩 السودان (+249)</option>
+                        </select>
+
+                        <input
+                            id="clientLocal"
+                            type="tel"
+                            inputmode="numeric"
+                            autocomplete="tel"
+                            placeholder="اكتب رقمك بدون كود الدولة"
+                            value=""
+                            class="sm:col-span-2 w-full rounded-2xl border border-gray-300 bg-gray-50
+                                   px-4 py-5 text-lg
+                                   placeholder:text-gray-400
+                                   focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        >
+                    </div>
+
+                    <input type="hidden" id="clientNumberFull" name="client_number"
+                           value="{{ old('client_number', $product->client_number ?? '') }}">
+
+                    <div class="mt-2 text-xs text-gray-500">
+                        سيتم إرسال إشعار واتساب عند <b>قبول</b> أو <b>رفض</b> طلبك.
+                    </div>
                     @error('client_number')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                     @enderror
@@ -325,6 +361,50 @@
 let currentStep = 1;
 const totalSteps = 7;
 let isProcessingImages = false;
+const MAX_IMG_DIM = 1600;
+const JPEG_QUALITY = 0.72;
+
+async function downscaleToJpeg(file, opts = {}) {
+  const maxDim = opts.maxDim || MAX_IMG_DIM;
+  const quality = (typeof opts.quality === 'number') ? opts.quality : JPEG_QUALITY;
+
+  if (!file || !file.type || !file.type.startsWith('image/')) return file;
+
+  // Compress only if the file is large (keeps fast devices fast)
+  const isHeic = file.type === 'image/heic' || (file.name || '').toLowerCase().endsWith('.heic');
+  if (!isHeic && (file.size || 0) < 900 * 1024) {
+    return file;
+  }
+
+  const img = await new Promise((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = URL.createObjectURL(file);
+  });
+
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  const scale = Math.min(1, maxDim / Math.max(w, h));
+  const tw = Math.max(1, Math.round(w * scale));
+  const th = Math.max(1, Math.round(h * scale));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = tw;
+  canvas.height = th;
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.drawImage(img, 0, 0, tw, th);
+
+  const blob = await new Promise((resolve) => {
+    canvas.toBlob((b) => resolve(b), 'image/jpeg', quality);
+  });
+
+  try { URL.revokeObjectURL(img.src); } catch (e) {}
+
+  if (!blob) return file;
+  const base = (file.name || 'image').replace(/\.(heic|png|webp|jpeg|jpg)$/i, '');
+  return new File([blob], base + '.jpg', { type: 'image/jpeg' });
+}
 
 function setWizardBusy(state, label = 'التالي') {
     isProcessingImages = state;
@@ -383,6 +463,19 @@ function validateStep(step) {
             return false;
         }
     }
+    if (step === 4) {
+        const dial = document.getElementById('clientDial');
+        const local = document.getElementById('clientLocal');
+        const full = document.getElementById('clientNumberFull');
+        if (dial && local && full) {
+            syncClientNumber();
+            const v = (full.value || '').trim();
+            if (v.length < 9) {
+                alert('رقم الواتساب مطلوب');
+                return false;
+            }
+        }
+    }
     if (step === 5) {
         const mainImage = document.querySelector('input[name="product"]');
         if (!mainImage || mainImage.files.length === 0) {
@@ -398,6 +491,26 @@ function validateStep(step) {
         }
     }
     return true;
+}
+
+function syncClientNumber() {
+    const dial = document.getElementById('clientDial');
+    const local = document.getElementById('clientLocal');
+    const full = document.getElementById('clientNumberFull');
+    if (!dial || !local || !full) return;
+
+    const dialDigits = (dial.value || '').replace(/\D+/g, '');
+    let localDigits = (local.value || '').replace(/\D+/g, '');
+    // remove leading zeros users usually type
+    localDigits = localDigits.replace(/^0+/, '');
+
+    // If user pasted full international number into local field, keep it as-is.
+    if (dialDigits && localDigits.startsWith(dialDigits) && localDigits.length >= dialDigits.length + 6) {
+        full.value = localDigits;
+        return;
+    }
+
+    full.value = (dialDigits + localDigits).replace(/\D+/g, '');
 }
 
 function nextStep() {
@@ -423,7 +536,8 @@ function updateReview() {
     const name = document.querySelector('input[name="ar[name]"]')?.value?.trim() || '—';
     const shortDesc = document.querySelector('textarea[name="ar[short_description]"]')?.value?.trim() || '—';
     const price = document.querySelector('input[name="price"]')?.value?.trim() || '—';
-    const phone = document.querySelector('input[name="client_number"]')?.value?.trim() || '—';
+    syncClientNumber();
+    const phone = document.getElementById('clientNumberFull')?.value?.trim() || '—';
     const mainImage = document.querySelector('input[name="product"]')?.files?.[0]?.name || 'غير مرفوعة';
     const galleryCount = document.querySelector('input[name="gallery[]"]')?.files?.length || 0;
 
@@ -437,21 +551,99 @@ function updateReview() {
 
 document.addEventListener('DOMContentLoaded', () => {
     showStep(currentStep);
+    // Keep hidden full phone in sync.
+    try {
+        document.getElementById('clientDial')?.addEventListener('change', syncClientNumber);
+        document.getElementById('clientLocal')?.addEventListener('input', syncClientNumber);
+
+        // Pre-fill local phone if full already exists (old input).
+        const full = document.getElementById('clientNumberFull');
+        const dial = document.getElementById('clientDial');
+        const local = document.getElementById('clientLocal');
+        if (full && dial && local) {
+            const fullDigits = (full.value || '').replace(/\D+/g, '');
+            if (fullDigits.length >= 8) {
+                const dials = Array.from(dial.options).map(o => (o.value || '').replace(/\D+/g, ''))
+                    .filter(Boolean)
+                    .sort((a, b) => b.length - a.length);
+                const match = dials.find(d => fullDigits.startsWith(d));
+                if (match) {
+                    dial.value = match;
+                    local.value = fullDigits.slice(match.length);
+                } else {
+                    // fallback: show last 9 digits
+                    local.value = fullDigits.slice(-9);
+                }
+            }
+            syncClientNumber();
+        }
+    } catch (e) {}
 });
 </script>
 
 <script>
 document.getElementById('productForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-
     const form = this;
+    try { syncClientNumber(); } catch (e) {}
     const uploadBox = document.getElementById('uploadBox');
     const progressBar = document.getElementById('progressBar');
     const progressPercent = document.getElementById('progressPercent');
     const progressInfo = document.getElementById('progressInfo');
     const progressTime = document.getElementById('progressTime');
 
-    uploadBox.classList.remove('hidden');
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+
+    // Basic guard: prevent double submit
+    const submitBtn = document.getElementById('finalSubmit');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        submitBtn.textContent = 'جاري الإرسال...';
+    }
+
+    // Show overlay early so user doesn't think it's frozen
+    if (uploadBox) uploadBox.classList.remove('hidden');
+
+    // If SweetAlert2 didn't load yet, fallback to alert later
+    const showSuccess = () => {
+        if (window.Swal && Swal.fire) {
+            Swal.fire({
+                icon: 'success',
+                title: 'تم تحميل الحساب',
+                text: 'تم رفع المنتج بنجاح',
+                confirmButtonText: 'تمام'
+            }).then(() => window.location.reload());
+        } else {
+            alert('تم رفع المنتج بنجاح');
+            window.location.reload();
+        }
+    };
+    const showError = (msg) => {
+        const text = msg || 'حدث خطأ أثناء رفع المنتج';
+        if (window.Swal && Swal.fire) {
+            Swal.fire({ icon: 'error', title: 'خطأ', text });
+        } else {
+            alert(text);
+        }
+        if (uploadBox) uploadBox.classList.add('hidden');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitBtn.textContent = 'نشر الحساب';
+        }
+    };
+
+    // iOS Safari is more reliable with native form submit for large multi-file uploads.
+    if (isIOS) {
+        // Let the browser handle upload; keep a simple “uploading” overlay.
+        if (progressPercent) progressPercent.innerText = 'جاري الرفع...';
+        if (progressInfo) progressInfo.innerText = 'قد يستغرق وقتًا حسب حجم الصور — لا تغلق الصفحة';
+        if (progressTime) progressTime.innerText = '';
+        if (progressBar) progressBar.style.width = '35%';
+        return; // do NOT preventDefault => native submit continues
+    }
+
+    e.preventDefault();
 
     const formData = new FormData(form);
     const xhr = new XMLHttpRequest();
@@ -460,6 +652,7 @@ document.getElementById('productForm').addEventListener('submit', function (e) {
 
     xhr.open('POST', form.action, true);
     xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+    xhr.timeout = 12 * 60 * 1000; // 12 minutes
 
     xhr.upload.onprogress = function (e) {
         if (e.lengthComputable) {
@@ -481,28 +674,19 @@ document.getElementById('productForm').addEventListener('submit', function (e) {
 
     xhr.onload = function () {
         if (xhr.status >= 200 && xhr.status < 300) {
-            Swal.fire({
-                icon: 'success',
-                title: 'تم تحميل الحساب',
-                text: 'تم رفع المنتج بنجاح',
-                confirmButtonText: 'تمام'
-            }).then(() => {
-                window.location.reload();
-            });
+            showSuccess();
         } else {
             console.error(xhr.responseText);
-            Swal.fire({
-                icon: 'error',
-                title: 'خطأ',
-                text: 'حدث خطأ أثناء رفع المنتج'
-            });
-            uploadBox.classList.add('hidden');
+            showError('حدث خطأ أثناء رفع المنتج');
         }
     };
 
     xhr.onerror = function () {
-        alert('فشل الاتصال');
-        uploadBox.classList.add('hidden');
+        showError('فشل الاتصال أثناء الرفع');
+    };
+
+    xhr.ontimeout = function () {
+        showError('انتهت مهلة الرفع. حاول مرة أخرى أو قلّل حجم الصور.');
     };
 
     xhr.send(formData);
@@ -542,6 +726,13 @@ async function previewMainImage(input) {
     dt.items.add(file);
     input.files = dt.files;
   }
+
+  try {
+    file = await downscaleToJpeg(file);
+    const dt2 = new DataTransfer();
+    dt2.items.add(file);
+    input.files = dt2.files;
+  } catch (e) {}
 
   fileName.innerText = file.name;
   previewImg.src = URL.createObjectURL(file);
@@ -583,18 +774,33 @@ async function previewGalleryImages(input) {
     galleryFiles = [];
     preview.innerHTML = '';
 
-    for (let file of files) {
-        if (file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic')) {
-            const blob = await heic2any({
-                blob: file,
-                toType: 'image/jpeg',
-                quality: 0.8
-            });
+    for (let i = 0; i < files.length; i++) {
+        let file = files[i];
 
-            file = new File([blob], file.name.replace('.heic', '.jpg'), {
-                type: 'image/jpeg'
-            });
+        if (nameLabel) {
+            nameLabel.textContent = `جاري تجهيز الصور... (${i + 1} / ${files.length})`;
+            nameLabel.classList.remove('text-red-600', 'text-green-600');
+            nameLabel.classList.add('text-gray-500');
         }
+
+        try {
+            if (file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic')) {
+                const blob = await heic2any({
+                    blob: file,
+                    toType: 'image/jpeg',
+                    quality: 0.8
+                });
+
+                file = new File([blob], file.name.replace('.heic', '.jpg'), {
+                    type: 'image/jpeg'
+                });
+            }
+        } catch (e) {}
+
+        try {
+            file = await downscaleToJpeg(file);
+        } catch (e) {}
+
         galleryFiles.push(file);
     }
 

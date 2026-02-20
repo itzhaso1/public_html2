@@ -13,7 +13,9 @@ class ShopController extends Controller
 {
     public function index(Request $request)
     {
-        $products = Product::query()->with(['translations', 'media']);
+        $products = Product::query()
+            ->with(['translations', 'media'])
+            ->websiteVisible();
  
         // ====================================================
         // ✅ إخفاء منتجات الشحن الجديدة من المتجر الرئيسي

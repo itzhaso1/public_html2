@@ -2,12 +2,13 @@
 
 namespace App\Repositories;
 
-use App\Models\{Product, Category, Type, Brand, Tag};
+use App\Models\{Product, Category, Type, Brand, Tag, Section};
 use App\Services\Contracts\ProductInterface;
 use Illuminate\Http\Request;
 use App\DataTables\Dashboard\Admin\ProductDataTable;
 use App\Models\Concerns\UploadVideoTrait;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 
 class ProductRepository implements ProductInterface
 {
@@ -18,8 +19,36 @@ class ProductRepository implements ProductInterface
      * ========================= */
     public function index(ProductDataTable $productDataTable)
     {
+        $route = request()->route();
+        $routeName = $route?->getName();
+        $group = null;
+        if ($routeName === 'admin.products.accounts') {
+            $group = 'accounts';
+        } elseif ($routeName === 'admin.products.charge') {
+            $group = 'charge';
+        } elseif ($routeName === 'admin.products.codes') {
+            $group = 'codes';
+        } else {
+            $group = request()->get('group');
+        }
+        $pageTitle = trans('dashboard/admin.product.products');
+
+        $countQuery = Product::query();
+        if ($group === 'accounts') {
+            $pageTitle = 'قائمة الحسابات';
+            $countQuery->whereNull('service_type');
+        } elseif ($group === 'charge') {
+            $pageTitle = 'قائمة باقات الشحن';
+            $countQuery->where('service_type', 'gems');
+        } elseif ($group === 'codes') {
+            $pageTitle = 'قائمة منتجات الأكواد';
+            $countQuery->where('service_type', 'codes');
+        }
+
         return $productDataTable->render('dashboard.admin.products.index', [
-            'pageTitle' => trans('dashboard/admin.product.products'),
+            'pageTitle' => $pageTitle,
+            'group' => $group,
+            'productsCount' => $countQuery->count(),
         ]);
     }
 
@@ -30,11 +59,15 @@ class ProductRepository implements ProductInterface
     {
         $defaultCategoryId = Category::query()->where('status', 'active')->value('id') ?? Category::query()->value('id');
         $defaultTypeId = Type::query()->value('id');
+        $categories = Category::query()->latest()->get();
+        $sections = Section::query()->orderBy('order')->with('translations')->get();
 
         return view('dashboard.admin.products.form', [
             'pageTitle' => 'إضافة منتج',
             'defaultCategoryId' => $defaultCategoryId,
             'defaultTypeId' => $defaultTypeId,
+            'categories' => $categories,
+            'sections' => $sections,
         ]);
     }
 
@@ -48,6 +81,9 @@ class ProductRepository implements ProductInterface
 
         // الوسوم
         $product->tags()->sync($request->input('tags', []));
+
+        // أقسام الصفحة الرئيسية (Sections)
+        $product->sections()->sync($request->input('section_ids', []));
 
         // الصورة الرئيسية
         if ($request->hasFile('product')) {
@@ -84,6 +120,8 @@ class ProductRepository implements ProductInterface
             $product->uploadVideo($request->file('video'));
         }
 
+        $this->flushWebsiteProductCaches();
+
         return redirect()->route('admin.products.index')
             ->with('success', 'تم إضافة المنتج بنجاح');
     }
@@ -98,6 +136,9 @@ class ProductRepository implements ProductInterface
 
     // الوسوم
     $product->tags()->sync($request->input('tags', []));
+
+    // أقسام الصفحة الرئيسية (Sections)
+    $product->sections()->sync($request->input('section_ids', []));
 
     // تحديث الصورة الرئيسية
     if ($request->hasFile('product')) {
@@ -165,6 +206,8 @@ if ($request->hasFile('video')) {
     $product->uploadVideo($request->file('video'));
 }
 
+    $this->flushWebsiteProductCaches();
+
 
     return redirect()->route('admin.products.index')
         ->with('success', 'تم تحديث المنتج بنجاح');
@@ -175,16 +218,20 @@ if ($request->hasFile('video')) {
      * ========================= */
     public function edit(Product $product)
     {
-        $product->load(['tags', 'media']);
+        $product->load(['tags', 'media', 'sections']);
 
         $defaultCategoryId = Category::query()->where('status', 'active')->value('id') ?? Category::query()->value('id');
         $defaultTypeId = Type::query()->value('id');
+        $categories = Category::query()->latest()->get();
+        $sections = Section::query()->orderBy('order')->with('translations')->get();
 
         return view('dashboard.admin.products.form', [
             'pageTitle' => 'تعديل منتج',
             'product'   => $product,
             'defaultCategoryId' => $defaultCategoryId,
             'defaultTypeId' => $defaultTypeId,
+            'categories' => $categories,
+            'sections' => $sections,
         ]);
     }
 
@@ -196,8 +243,26 @@ if ($request->hasFile('video')) {
         $product->deleteExistingMedia('product', $product, null, 'media', true, 'product');
         $product->delete();
 
+        $this->flushWebsiteProductCaches();
+
         return redirect()->route('admin.products.index')
             ->with('success', 'تم الحذف بنجاح!');
+    }
+
+    private function flushWebsiteProductCaches(): void
+    {
+        $locales = array_keys(config('laravellocalization.supportedLocales', []));
+        if (empty($locales)) {
+            $locales = (array) config('translatable.locales', []);
+        }
+        if (empty($locales)) {
+            $locales = ['ar', 'en'];
+        }
+
+        foreach ($locales as $locale) {
+            Cache::forget("home.products.v2.$locale");
+            Cache::forget("home.sections.v2.$locale");
+        }
     }
 
     /* =========================
@@ -210,6 +275,7 @@ if ($request->hasFile('video')) {
             'brand_id',
             'type_id',
             'price_before_discount',
+            'deal_ends_at',
             'price',
             'stock',
             'sku',
@@ -217,6 +283,12 @@ if ($request->hasFile('video')) {
             'featured',
             'slug',
             'client_number',
+            'publish_source',
+            'review_note',
+            'review_reject_reasons',
+            'reviewed_by',
+            'reviewed_at',
+            'rejected_at',
         ]);
 
         if (empty($data['category_id'])) {

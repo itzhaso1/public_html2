@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\DataTables\Dashboard\Admin\SectionDataTable;
 use Illuminate\Support\Facades\DB;
 use App\Actions\Section\StoreSectionAction;
+use Illuminate\Support\Facades\Cache;
 class SectionRepository implements SectionInterface {
     public function __construct(protected StoreSectionAction $storeAction) {
         $this->storeAction = $storeAction;
@@ -64,6 +65,7 @@ class SectionRepository implements SectionInterface {
             $section->categories()->sync($request->category_ids ?? []);
 
             DB::commit();
+            $this->flushHomeSectionsCache();
 
             return redirect()->route('admin.sections.index')->with('success', 'تم التحديث بنجاح!');
         } catch (\Exception $e) {
@@ -75,6 +77,23 @@ class SectionRepository implements SectionInterface {
     public function destroy(Section $section)
     {
         $section->delete();
+        $this->flushHomeSectionsCache();
         return redirect()->route('admin.sections.index')->with('success', 'تم الحذف بنجاح!');
+    }
+
+    private function flushHomeSectionsCache(): void
+    {
+        $locales = array_keys(config('laravellocalization.supportedLocales', []));
+        if (empty($locales)) {
+            $locales = (array) config('translatable.locales', []);
+        }
+        if (empty($locales)) {
+            $locales = ['ar', 'en'];
+        }
+
+        foreach ($locales as $locale) {
+            Cache::forget("home.sections.v2.$locale");
+            Cache::forget("home.products.v2.$locale");
+        }
     }
 }

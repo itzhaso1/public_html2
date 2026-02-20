@@ -15,6 +15,7 @@ return [
     |
     */
 
+   // Keep Laravel default; production should set DB_CONNECTION explicitly in .env
    'default' => env('DB_CONNECTION', 'sqlite'),
 
 

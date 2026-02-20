@@ -129,6 +129,15 @@
             transform: scale(1.2);
         }
 
+        .select-all {
+            cursor: pointer;
+            user-select: all;
+        }
+
+        .select-all:hover {
+            text-decoration: underline;
+        }
+
         /* الشارات */
         .badge {
             position: absolute;

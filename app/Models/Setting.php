@@ -20,7 +20,13 @@ class Setting extends Model
         'currency',
         'loyalty_points',
         'delivery_fees',
-        'version'
+        'version',
+        'home_quick_charge_title',
+        'home_quick_codes_title',
+        'home_quick_cash_exchange_title',
+        'home_quick_money_exchange_title',
+        'cash_exchange_enabled',
+        'money_exchange_enabled',
     ];
 
     public function media()

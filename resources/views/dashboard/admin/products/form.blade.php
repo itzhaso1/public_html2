@@ -93,18 +93,61 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 
-                    {{-- قيم تلقائية بدل الأقسام/الوحدات/الوسوم (لتبسيط الداشبورد) --}}
-                    <input type="hidden" name="category_id"
-                           value="{{ old('category_id', $product?->category_id ?? $defaultCategoryId) }}">
-                    <input type="hidden" name="type_id"
-                           value="{{ old('type_id', $product?->type_id ?? $defaultTypeId) }}">
-                    {{-- tags[] تم إزالتها من الواجهة --}}
+                    {{-- الأقسام (التصنيفات) --}}
+                    <div class="form-group mb-3">
+                        <label>القسم</label>
+                        <select name="category_id" class="form-control" required>
+                            @foreach(($categories ?? []) as $category)
+                                <option value="{{ $category->id }}"
+                                    @selected(old('category_id', $product?->category_id ?? $defaultCategoryId) == $category->id)>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- أقسام الصفحة الرئيسية (للتجميع مثل: حسابات قوية / خصومات / ...) --}}
+                    <div class="form-group mb-3">
+                        <label>أقسام الصفحة الرئيسية</label>
+                        @php
+                            $selectedSections = old('section_ids', isset($product) ? $product->sections->pluck('id')->toArray() : []);
+                        @endphp
+                        <select name="section_ids[]" class="form-control" multiple>
+                            @foreach(($sections ?? []) as $section)
+                                <option value="{{ $section->id }}"
+                                    @selected(in_array($section->id, $selectedSections))>
+                                    {{ $section->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">تقدر تختار أكثر من قسم لنفس المنتج.</small>
+                    </div>
+
+                    {{-- إبقاء النوع افتراضي كما كان (لتجنب كسر النظام) --}}
+                    <input type="hidden" name="type_id" value="{{ old('type_id', $product?->type_id ?? $defaultTypeId) }}">
 
 
                     <div class="form-group mb-3">
                         <label>السعر قبل الخصم</label>
                         <input type="number" step="0.01" name="price_before_discount" class="form-control"
                             value="{{ old('price_before_discount', $product->price_before_discount ?? '') }}">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>عداد الخصم (اختياري)</label>
+                        @php
+                            $dealEndsValue = old('deal_ends_at');
+                            if ($dealEndsValue === null && isset($product) && !empty($product->deal_ends_at)) {
+                                try {
+                                    $dealEndsValue = $product->deal_ends_at->format('Y-m-d\TH:i');
+                                } catch (\Throwable $e) {
+                                    $dealEndsValue = '';
+                                }
+                            }
+                        @endphp
+                        <input type="datetime-local" name="deal_ends_at" class="form-control"
+                               value="{{ $dealEndsValue ?? '' }}">
+                        <small class="text-muted">إذا حطيت وقت انتهاء، سيظهر عدّاد فوق المنتج في الصفحة الرئيسية عند وجود خصم.</small>
                     </div>
 
                     <div class="form-group mb-3">

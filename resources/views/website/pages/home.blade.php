@@ -89,59 +89,45 @@
 </div>
 
 <!-- اختيار العملة -->
-<div class="px-4 py-4 flex flex-row-reverse items-center justify-center gap-4 bg-gradient-to-l from-yellow-50 to-white rounded-lg shadow-md border border-gray-200">
-    <span class="font-bold text-base text-gray-800">اختر عملة بلدك</span>
-
-    <button class="currency-btn bg-white hover:bg-yellow-100 p-1.5 rounded-full shadow transition-all duration-200 border border-gray-200 hover:scale-105 ring-2 ring-yellow-500"
-            data-symbol="ر.س" data-rate="1" data-country="SA" title="الريال السعودي">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/0/0d/Flag_of_Saudi_Arabia.svg"
-             class="w-7 h-7 rounded-full" alt="علم السعودية" loading="lazy" decoding="async" width="28" height="28">
-    </button>
-
-    <button class="currency-btn bg-white hover:bg-yellow-100 p-1.5 rounded-full shadow transition-all duration-200 border border-gray-200 hover:scale-105"
-            data-symbol="د.أ" data-rate="0.1885" data-country="JO" title="الدينار الأردني">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c0/Flag_of_Jordan.svg"
-             class="w-7 h-7 rounded-full" alt="علم الأردن" loading="lazy" decoding="async" width="28" height="28">
-    </button>
-
-    <button class="currency-btn bg-white hover:bg-yellow-100 p-1.5 rounded-full shadow transition-all duration-200 border border-gray-200 hover:scale-105"
-            data-symbol="$" data-rate="0.2564102564" data-country="US" title="الدولار الأمريكي">
-        <img src="https://upload.wikimedia.org/wikipedia/en/a/a4/Flag_of_the_United_States.svg"
-             class="w-7 h-7 rounded-full" alt="علم أمريكا" loading="lazy" decoding="async" width="28" height="28">
-    </button>
-<!-- الريال العماني -->
-<button class="currency-btn bg-white hover:bg-yellow-100 p-1.5 rounded-full shadow transition-all duration-200 border border-gray-200 hover:scale-105"
-        data-symbol="ر.ع" data-rate="0.1" data-country="OM" title="الريال العماني">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/d/dd/Flag_of_Oman.svg"
-         class="w-7 h-7 rounded-full" alt="علم عُمان" loading="lazy" decoding="async" width="28" height="28">
-</button>
-    <!-- الجنيه المصري -->
-    <button class="currency-btn bg-white hover:bg-yellow-100 p-1.5 rounded-full shadow transition-all duration-200 border border-gray-200 hover:scale-105"
-            data-symbol="ج.م" data-rate="13.0" data-country="EG" title="الجنيه المصري">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/f/fe/Flag_of_Egypt.svg"
-             class="w-7 h-7 rounded-full" alt="علم مصر" loading="lazy" decoding="async" width="28" height="28">
-    </button>
+<div class="mt-2">
+    @include('website.partials.currency_picker')
 </div>
 
 <!-- أقسام سريعة -->
 <div class="px-4 mt-4">
     <div class="grid grid-cols-2 gap-3 sm:gap-4">
 
+        @php
+            $chargeTitle = $settings?->home_quick_charge_title ?: 'شحن جواهر';
+            $codesTitle = $settings?->home_quick_codes_title ?: 'أكواد ملابس';
+            $cashTitle = $settings?->home_quick_cash_exchange_title ?: 'استبدل رصيدك كاش';
+            $moneyTitle = $settings?->home_quick_money_exchange_title ?: 'تحويل الأموال';
+
+            $defaultQuickImg = asset('public/uploads/oki/old.png');
+            $chargeImg = $settings?->getMediaUrl('setting', $settings, null, 'media', 'home_quick_charge') ?: $defaultQuickImg;
+            $codesImg = $settings?->getMediaUrl('setting', $settings, null, 'media', 'home_quick_codes') ?: $defaultQuickImg;
+            $cashImg = $settings?->getMediaUrl('setting', $settings, null, 'media', 'home_quick_cash_exchange') ?: null;
+            $moneyImg = $settings?->getMediaUrl('setting', $settings, null, 'media', 'home_quick_money_exchange') ?: null;
+
+            $cashEnabled = (bool) ($cashExchangeEnabled ?? ($settings?->cash_exchange_enabled ?? true));
+            $moneyEnabled = (bool) ($moneyExchangeEnabled ?? false);
+        @endphp
+
         <!-- شحن جواهر -->
         <a href="{{ route('website.diamonds.charge') }}"
            class="group relative overflow-hidden rounded-2xl border border-yellow-200 bg-gradient-to-l from-yellow-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
-            <div class="p-3 sm:p-4">
+            <div class="p-2.5 sm:p-4">
                 <div class="flex items-center justify-center">
                     {{-- غيّر الصورة كما تريد --}}
-                    <img src="{{ asset('public/uploads/oki/old.png') }}"
-                         alt="شحن جواهر"
-                         class="w-full h-28 sm:h-32 object-cover rounded-xl"
+                    <img src="{{ $chargeImg }}"
+                         alt="{{ $chargeTitle }}"
+                         class="w-full h-24 sm:h-32 object-cover rounded-xl"
                          loading="lazy" decoding="async">
                 </div>
 
                 <div class="mt-2 text-center">
                     <span class="inline-block text-xs text-gray-500">القسم</span>
-                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">شحن جواهر</h3>
+                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">{{ $chargeTitle }}</h3>
                 </div>
 
                 <p class="text-[11px] sm:text-sm text-gray-600 mt-2 text-center leading-relaxed">
@@ -160,18 +146,18 @@
         <!-- أكواد جواهر -->
         <a href="{{ route('website.diamonds.codes') }}"
            class="group relative overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-l from-blue-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99]">
-            <div class="p-3 sm:p-4">
+            <div class="p-2.5 sm:p-4">
                 <div class="flex items-center justify-center">
                     {{-- غيّر الصورة كما تريد --}}
-                    <img src="{{ asset('public/uploads/oki/old.png') }}"
-                         alt="أكواد جواهر"
-                         class="w-full h-28 sm:h-32 object-cover rounded-xl"
+                    <img src="{{ $codesImg }}"
+                         alt="{{ $codesTitle }}"
+                         class="w-full h-24 sm:h-32 object-cover rounded-xl"
                          loading="lazy" decoding="async">
                 </div>
 
                 <div class="mt-2 text-center">
                     <span class="inline-block text-xs text-gray-500">القسم</span>
-                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">أكواد ملابس</h3>
+                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">{{ $codesTitle }}</h3>
                 </div>
 
                 <p class="text-[11px] sm:text-sm text-gray-600 mt-2 text-center leading-relaxed">
@@ -187,6 +173,90 @@
             </div>
         </a>
 
+        <!-- استبدل رصيدك كاش -->
+        <a href="{{ $cashEnabled ? route('website.cash_exchange.index') : 'javascript:void(0)' }}"
+           class="group relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-l from-emerald-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99] {{ $cashEnabled ? '' : 'opacity-60 cursor-not-allowed pointer-events-none' }}">
+            <div class="p-2.5 sm:p-4">
+                <div class="flex items-center justify-center">
+                    @if($cashImg)
+                        <img src="{{ $cashImg }}" alt="{{ $cashTitle }}"
+                             class="w-full h-24 sm:h-32 object-cover rounded-xl"
+                             loading="lazy" decoding="async">
+                    @else
+                        <div class="w-full h-24 sm:h-32 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-700 text-4xl font-extrabold">
+                            💵
+                        </div>
+                    @endif
+                </div>
+
+                <div class="mt-2 text-center">
+                    <span class="inline-block text-xs text-gray-500">القسم</span>
+                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">{{ $cashTitle }}</h3>
+                </div>
+
+                <p class="text-[11px] sm:text-sm text-gray-600 mt-2 text-center leading-relaxed">
+                    اختر فئة الرصيد وادخل كود البطاقة لاستلام كاش
+                </p>
+
+                <div class="mt-3 flex justify-center">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700">
+                        <i class="bi bi-cash-coin"></i>
+                        دخول القسم
+                    </span>
+                </div>
+            </div>
+
+            @unless($cashEnabled)
+                <div class="absolute inset-0 bg-white/70 flex items-center justify-center">
+                    <span class="rounded-full bg-emerald-700 text-white text-xs font-extrabold px-3 py-1.5 shadow">
+                        غير متاح حالياً
+                    </span>
+                </div>
+            @endunless
+        </a>
+
+        <!-- تحويل الأموال / تبادل العملات -->
+        <a href="{{ $moneyEnabled ? route('website.money_exchange.index') : 'javascript:void(0)' }}"
+           class="group relative overflow-hidden rounded-2xl border border-purple-200 bg-gradient-to-l from-purple-50 to-white shadow-sm transition hover:shadow-md active:scale-[0.99] {{ $moneyEnabled ? '' : 'opacity-60 cursor-not-allowed pointer-events-none' }}">
+            <div class="p-2.5 sm:p-4">
+                <div class="flex items-center justify-center">
+                    @if($moneyImg)
+                        <img src="{{ $moneyImg }}" alt="{{ $moneyTitle }}"
+                             class="w-full h-24 sm:h-32 object-cover rounded-xl"
+                             loading="lazy" decoding="async">
+                    @else
+                        <div class="w-full h-24 sm:h-32 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-700 text-4xl font-extrabold">
+                            💱
+                        </div>
+                    @endif
+                </div>
+
+                <div class="mt-2 text-center">
+                    <span class="inline-block text-xs text-gray-500">القسم</span>
+                    <h3 class="font-extrabold text-sm sm:text-base text-gray-900 mt-0.5">{{ $moneyTitle }}</h3>
+                </div>
+
+                <p class="text-[11px] sm:text-sm text-gray-600 mt-2 text-center leading-relaxed">
+                    تحويل SAR ↔ USDT حسب سعر الصرف
+                </p>
+
+                <div class="mt-3 flex justify-center">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-purple-500/10 px-3 py-1 text-xs font-bold text-purple-700">
+                        <i class="bi bi-currency-exchange"></i>
+                        دخول القسم
+                    </span>
+                </div>
+            </div>
+
+            @unless($moneyEnabled)
+                <div class="absolute inset-0 bg-white/70 flex items-center justify-center">
+                    <span class="rounded-full bg-purple-700 text-white text-xs font-extrabold px-3 py-1.5 shadow">
+                        غير متاح حالياً
+                    </span>
+                </div>
+            @endunless
+        </a>
+
     </div>
 </div>
 
@@ -198,15 +268,25 @@
         <h2 class="text-center font-bold text-xl mb-4">{{ $section->name }}</h2>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            @foreach($section->products as $product)
+            @foreach(($section->products ?? collect())->sortByDesc(fn($p) => (float) ($p->price ?? 0)) as $product)
                 @php
                     $imageUrl = $product->getMediaUrl('product', $product, null, 'media', 'product');
-                    $productImage = $imageUrl ?: $fallbackImage;
-                    $isSold = $product->featured === 1;
+                    $thumb = ($product->service_type ?? null) === 'codes' ? ($product->codeThumbnail?->image_path ?? null) : null;
+                    $thumbUrl = $thumb ? Storage::disk('public')->url($thumb) : null;
+                    $productImage = $imageUrl ?: ($thumbUrl ?: $fallbackImage);
+                    $isSold = (bool) ($product->featured ?? false);
                     $discountPercent = null;
+                    $dealEndsAt = $product->deal_ends_at ?? null;
 
                     if (!empty($product->price_before_discount) && $product->price_before_discount > 0) {
                         $discountPercent = round((($product->price_before_discount - $product->price) / $product->price_before_discount) * 100);
+                    }
+
+                    $hasCountdown = false;
+                    try {
+                        $hasCountdown = (! $isSold) && ($discountPercent > 0) && $dealEndsAt && $dealEndsAt->isFuture();
+                    } catch (\Throwable $e) {
+                        $hasCountdown = false;
                     }
                 @endphp
 
@@ -220,6 +300,13 @@
                     @if(!$isSold && !empty($discountPercent) && $discountPercent > 0)
                         <div class="absolute top-2 right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded shadow">
                             خصم {{ $discountPercent }}%
+                        </div>
+                    @endif
+
+                    @if($hasCountdown)
+                        <div class="deal-countdown-wrap absolute top-9 left-1/2 -translate-x-1/2 bg-black/85 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow">
+                            ⏳ ينتهي خلال:
+                            <span class="deal-countdown font-mono" data-ends="{{ $dealEndsAt->toIso8601String() }}">--:--:--</span>
                         </div>
                     @endif
 
@@ -278,11 +365,19 @@
             @php
                 $imageUrl = $product->getMediaUrl('product', $product, null, 'media', 'product');
                 $productImage = $imageUrl ?: $fallbackImage;
-                $isSold = $product->featured === 1;
+                $isSold = (bool) ($product->featured ?? false);
                 $discountPercent = null;
+                $dealEndsAt = $product->deal_ends_at ?? null;
 
                 if (!empty($product->price_before_discount) && $product->price_before_discount > 0) {
                     $discountPercent = round((($product->price_before_discount - $product->price) / $product->price_before_discount) * 100);
+                }
+
+                $hasCountdown = false;
+                try {
+                    $hasCountdown = (! $isSold) && ($discountPercent > 0) && $dealEndsAt && $dealEndsAt->isFuture();
+                } catch (\Throwable $e) {
+                    $hasCountdown = false;
                 }
             @endphp
 
@@ -298,6 +393,13 @@
                 @if(!$isSold && !empty($discountPercent) && $discountPercent > 0)
                     <div class="absolute top-2 right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded shadow">
                         خصم {{ $discountPercent }}%
+                    </div>
+                @endif
+
+                @if($hasCountdown)
+                    <div class="deal-countdown-wrap absolute top-9 left-1/2 -translate-x-1/2 bg-black/85 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow">
+                        ⏳ ينتهي خلال:
+                        <span class="deal-countdown font-mono" data-ends="{{ $dealEndsAt->toIso8601String() }}">--:--:--</span>
                     </div>
                 @endif
 
@@ -401,75 +503,6 @@
 @push('js')
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const currencyButtons = document.querySelectorAll(".currency-btn");
-    const DEFAULT_COUNTRY = "SA";
-    const CACHE_KEY = "user_country_code";
-    const CACHE_TTL = 6 * 60 * 60 * 1000;
-
-    const applyCurrency = (countryCode) => {
-        const btn = document.querySelector(`.currency-btn[data-country="${countryCode}"]`)
-            || document.querySelector(`.currency-btn[data-country="${DEFAULT_COUNTRY}"]`)
-            || currencyButtons[0];
-
-        if (btn) {
-            btn.click();
-        }
-    };
-
-    const detectCountry = async () => {
-        try {
-            const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
-            if (cached && (Date.now() - cached.ts) < CACHE_TTL) {
-                applyCurrency(cached.code);
-                return;
-            }
-
-            const res = await fetch("https://ipwho.is/?fields=country_code");
-            const data = await res.json();
-            const code = data?.country_code;
-
-            if (code) {
-                localStorage.setItem(CACHE_KEY, JSON.stringify({ code, ts: Date.now() }));
-                applyCurrency(code);
-                return;
-            }
-        } catch (e) {
-            // ignore
-        }
-
-        applyCurrency(DEFAULT_COUNTRY);
-    };
-
-    currencyButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
-            const symbol = btn.dataset.symbol;
-            const rate = parseFloat(btn.dataset.rate);
-
-            document.querySelectorAll(".product-price").forEach(p => {
-                const base = parseFloat(p.dataset.basePrice);
-                const baseOld = parseFloat(p.dataset.baseOld);
-                const current = p.querySelector(".current-price");
-                const old = p.querySelector(".old-price");
-
-                if (current && !isNaN(base)) {
-                    const converted = Math.round(base * rate);
-                    current.textContent = `${symbol} ${converted}`;
-                }
-
-                if (old && !isNaN(baseOld)) {
-                    const convertedOld = Math.round(baseOld * rate);
-                    old.textContent = convertedOld;
-                }
-            });
-
-            currencyButtons.forEach(b => b.classList.remove("ring-2", "ring-yellow-500"));
-            btn.classList.add("ring-2", "ring-yellow-500");
-        });
-    });
-
-    applyCurrency(DEFAULT_COUNTRY);
-    detectCountry();
-
     const stars = document.querySelectorAll(".star");
     stars.forEach((star, index) => {
         star.addEventListener("click", () => {
@@ -482,44 +515,44 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     });
+});
+</script>
 
-    if (typeof Swiper !== "undefined") {
-        new Swiper(".reviewsSwiper", {
-            loop: true,
-            autoplay: {
-                delay: 3000,
-                disableOnInteraction: false,
-            },
-            slidesPerView: 1.2,
-            spaceBetween: 12,
-            centeredSlides: true,
-            speed: 600,
-            effect: "slide",
-            pagination: {
-                el: ".swiper-pagination",
-                clickable: true,
-            },
-            breakpoints: {
-                480: { slidesPerView: 1.4 },
-                640: { slidesPerView: 2 },
-                1024: { slidesPerView: 3 },
-            },
-        });
-    }
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const els = Array.from(document.querySelectorAll('.deal-countdown[data-ends]'));
+    if (!els.length) return;
 
-    if (typeof Swiper !== "undefined" && document.querySelector('.swiper-container')) {
-        new Swiper('.swiper-container', {
-            loop: true,
-            autoplay: {
-                delay: 4000,
-                disableOnInteraction: false,
-            },
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-        });
-    }
+    const pad2 = (n) => String(Math.max(0, n)).padStart(2, '0');
+    const format = (sec) => {
+        sec = Math.max(0, Math.floor(sec));
+        const d = Math.floor(sec / 86400);
+        sec = sec % 86400;
+        const h = Math.floor(sec / 3600);
+        sec = sec % 3600;
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        if (d > 0) return `${d}ي ${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+        return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+    };
+
+    const tick = () => {
+        const now = Date.now();
+        for (const el of els) {
+            const ends = Date.parse(el.getAttribute('data-ends') || '');
+            if (!ends || Number.isNaN(ends)) continue;
+            const diffSec = Math.floor((ends - now) / 1000);
+            if (diffSec <= 0) {
+                const wrap = el.closest('.deal-countdown-wrap');
+                if (wrap) wrap.remove();
+                continue;
+            }
+            el.textContent = format(diffSec);
+        }
+    };
+
+    tick();
+    setInterval(tick, 1000);
 });
 </script>
 @endpush

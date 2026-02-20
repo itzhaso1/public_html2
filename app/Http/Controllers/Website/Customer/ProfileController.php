@@ -23,10 +23,12 @@ class ProfileController extends Controller
 
         $data = $request->validate([
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => ['nullable', 'string', 'min:8', 'max:32'],
         ]);
 
         $user->update([
             'email' => $data['email'],
+            'phone' => !empty($data['phone']) ? preg_replace('/\D+/', '', (string) $data['phone']) : null,
         ]);
 
         return back()->with('success', 'تم تحديث البريد الإلكتروني بنجاح.');

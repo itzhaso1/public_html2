@@ -18,16 +18,25 @@ class ManualPaymentRequest extends Model
         'contact_email',
         'amount',
         'currency',
+        'payment_method',
         'receipt_path',
         'status',
         'approved_at',
         'admin_note',
+        'shop2topup_trx_id',
+        'shop2topup_status',
+        'shop2topup_order_id',
+        'shop2topup_secure_id',
+        'shop2topup_delivery_at',
+        'shop2topup_response',
         'ip',
         'user_agent',
     ];
 
     protected $casts = [
         'approved_at' => 'datetime',
+        'shop2topup_delivery_at' => 'datetime',
+        'shop2topup_response' => 'array',
     ];
 
     public function product()

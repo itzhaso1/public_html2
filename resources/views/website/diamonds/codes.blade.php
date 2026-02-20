@@ -17,6 +17,10 @@
 ])
 
 <section class="max-w-7xl mx-auto px-4 pb-10" dir="rtl">
+    <div class="mt-4">
+        @include('website.partials.currency_picker')
+    </div>
+
     <div class="bg-white/70 backdrop-blur rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6">
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 justify-between">
             <div class="flex items-center gap-3">
@@ -39,13 +43,15 @@
     </div>
 
     @if($products->count() > 0)
-        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="mt-6 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             @foreach($products as $product)
                 @php
                     $imageUrl = method_exists($product, 'getMediaUrl')
                         ? $product->getMediaUrl('product', $product, null, 'media', 'product')
                         : null;
-                    $productImage = $imageUrl ?: $fallbackImage;
+                    $thumb = ($product->service_type ?? null) === 'codes' ? ($product->codeThumbnail?->image_path ?? null) : null;
+                    $thumbUrl = $thumb ? Storage::disk('public')->url($thumb) : null;
+                    $productImage = $imageUrl ?: ($thumbUrl ?: $fallbackImage);
                     $title = $product->name ?? 'كود';
                     $desc = $product->description ?? $product->short_description ?? null;
                     $descText = $desc ? \Illuminate\Support\Str::limit(trim(strip_tags($desc)), 90) : 'كود جاهز للتسليم';
@@ -63,17 +69,17 @@
                         </div>
                     </a>
 
-                    <div class="p-4 flex flex-col gap-3">
+                    <div class="p-3 sm:p-4 flex flex-col gap-3">
                         <div>
-                            <h3 class="font-extrabold text-gray-900 text-base sm:text-lg leading-snug">
+                            <h3 class="font-extrabold text-gray-900 text-sm sm:text-lg leading-snug">
                                 {{ $title }}
                             </h3>
-                            <p class="mt-1 text-sm text-gray-600 leading-relaxed">
+                            <p class="mt-1 text-xs sm:text-sm text-gray-600 leading-relaxed">
                                 {{ $descText }}
                             </p>
                         </div>
 
-                        <div class="flex items-end justify-between gap-3">
+                        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                             <div class="text-right">
                                 <div class="text-xs text-gray-500">السعر</div>
                                 <div class="text-lg font-extrabold text-green-600 product-price"
@@ -82,15 +88,15 @@
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                                 <a href="{{ route('website.product.show', $product) }}"
-                                   class="inline-flex items-center justify-center gap-2 rounded-xl bg-black px-4 py-2 text-sm font-bold text-white hover:bg-blue-600 transition">
+                                   class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-black px-4 py-2 text-xs sm:text-sm font-bold text-white hover:bg-blue-600 transition">
                                     عرض التفاصيل
                                     <span aria-hidden="true">›</span>
                                 </a>
                                 @if(config('bank.enabled'))
                                     <a href="{{ route('website.diamonds.manual_payment.create', $product) }}"
-                                       class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-800 hover:bg-gray-50 transition">
+                                       class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs sm:text-sm font-bold text-gray-800 hover:bg-gray-50 transition">
                                         دفع يدوي
                                     </a>
                                 @endif
