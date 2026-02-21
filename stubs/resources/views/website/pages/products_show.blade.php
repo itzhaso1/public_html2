@@ -197,17 +197,20 @@
             <h3 class="text-lg font-bold text-gray-800 mb-2">تواصل معنا مباشرة</h3>
             <p class="text-gray-600 mb-4">نسعد بخدمتك والإجابة على استفساراتك في أي وقت.</p>
 
-            <div class="text-2xl font-extrabold text-blue-600 mb-3 select-all">+962 7 7933 6872</div>
+            <div class="text-2xl font-extrabold text-blue-600 mb-3 select-all">{{ \App\Support\WhatsApp::display() }}</div>
 
             <div class="flex justify-center gap-3 flex-wrap">
                 <a href="tel:0777515306"
                     class="bg-green-600 text-white px-5 py-2 rounded-md shadow hover:bg-green-700 transition">
                     اتصل الآن
                 </a>
-                <a href="https://chat.whatsapp.com/LiEKm0hQPlB9yeToyetcbh" target="_blank"
-                    class="bg-[#25D366] text-white px-5 py-2 rounded-md shadow hover:bg-[#1ebe5d] transition">
-                    تواصل عبر واتساب
-                </a>
+                @php($whatsappHref = \App\Support\WhatsApp::href())
+                @if($whatsappHref)
+                    <a href="{{ $whatsappHref }}" target="_blank" rel="noopener noreferrer"
+                        class="bg-[#25D366] text-white px-5 py-2 rounded-md shadow hover:bg-[#1ebe5d] transition">
+                        تواصل عبر واتساب
+                    </a>
+                @endif
             </div>
         </div>
 

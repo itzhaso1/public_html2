@@ -12,8 +12,11 @@
         <div>
             <h2 class="font-bold mb-1">التواصل معنا</h2>
             <ul>
-                <li>📞 <a href="https://wa.me/9620777515306" class="underline">واتساب</a></li>
-                <li>📸 <a href="https://instagram.com/king2game.com" class="underline">إنستغرام</a></li>
+                @php($whatsappHref = \App\Support\WhatsApp::href())
+                @if($whatsappHref)
+                    <li>📞 <a href="{{ $whatsappHref }}" target="_blank" rel="noopener noreferrer" class="underline">واتساب</a></li>
+                @endif
+                <li>📸 <a href="{{ config('contact.instagram_url') }}" target="_blank" rel="noopener noreferrer" class="underline">إنستغرام</a></li>
             </ul>
         </div>
     </div>

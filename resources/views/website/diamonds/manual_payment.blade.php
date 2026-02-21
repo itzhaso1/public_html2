@@ -88,10 +88,12 @@
                 </button>
             </form>
 
-            @if(config('bank.whatsapp'))
+            @php($whatsappHref = \App\Support\WhatsApp::href())
+            @if($whatsappHref)
                 <a class="mt-3 w-full inline-flex items-center justify-center rounded-xl bg-[#25D366] px-5 py-3 text-sm font-extrabold text-white hover:brightness-95 transition"
                    target="_blank"
-                   href="https://wa.me/{{ preg_replace('/\\D+/', '', config('bank.whatsapp')) }}">
+                   rel="noopener noreferrer"
+                   href="{{ $whatsappHref }}">
                     إرسال الإيصال عبر واتساب (اختياري)
                 </a>
             @endif

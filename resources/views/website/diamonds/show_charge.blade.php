@@ -107,11 +107,15 @@
                         نفذت الكمية
                     </a>
                 @endif
-                <a href="https://chat.whatsapp.com/LiEKm0hQPlB9yeToyetcbh"
-                   target="_blank"
-                   class="inline-flex items-center justify-center rounded-xl bg-[#25D366] px-5 py-3 text-sm font-extrabold text-white hover:brightness-95 transition">
-                    تواصل واتساب لإتمام الطلب
-                </a>
+                @php($whatsappHref = \App\Support\WhatsApp::href())
+                @if($whatsappHref)
+                    <a href="{{ $whatsappHref }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center justify-center rounded-xl bg-[#25D366] px-5 py-3 text-sm font-extrabold text-white hover:brightness-95 transition">
+                        تواصل واتساب لإتمام الطلب
+                    </a>
+                @endif
             </div>
         </div>
     </div>

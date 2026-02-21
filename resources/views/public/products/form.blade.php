@@ -204,7 +204,7 @@
 
                         <div onclick="copyStoreOnly()" class="cursor-pointer select-none rounded-lg bg-white border p-3">
                             <div class="font-bold tracking-widest">مــتــجـر الــمــمالـــك</div>
-                            <div class="text-green-600 font-semibold">WHATSAPP+962ᅠ0777ᅠ515ﾠ306</div>
+                            <div class="text-green-600 font-semibold">WHATSAPP {{ \App\Support\WhatsApp::display() }}</div>
                             <div class="text-xs text-gray-500 mt-2">اضغط هنا لنسخ النص</div>
                         </div>
                     </div>
@@ -561,7 +561,8 @@ function removeMainImage() {
 }
 
 function copyStoreOnly() {
-    const text = `مــتــجـر الــمــمالـــك\nWHATSAPP+962ᅠ0777ᅠ515ﾠ306`;
+    const whatsapp = @json(\App\Support\WhatsApp::display());
+    const text = `مــتــجـر الــمــمالـــك\nWHATSAPP ${whatsapp}`;
     navigator.clipboard.writeText(text).then(() => {
         alert('تم نسخ النص ✔️');
     }).catch(() => {
