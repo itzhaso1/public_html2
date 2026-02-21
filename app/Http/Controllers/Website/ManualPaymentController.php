@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Services\Wasender\WasenderNotifier;
 
 class ManualPaymentController extends Controller
 {
@@ -114,6 +115,27 @@ class ManualPaymentController extends Controller
             'ip' => $request->ip(),
             'user_agent' => Str::limit((string) $request->userAgent(), 512, ''),
         ]);
+
+        // WhatsApp notifications (Wasender) - should never break the request flow
+        try {
+            /** @var WasenderNotifier $notifier */
+            $notifier = app(WasenderNotifier::class);
+
+            $notifier->notifyAdmins(
+                "طلب دفع يدوي جديد ✅\n"
+                ."المرجع: {$mpr->reference}\n"
+                ."المنتج: {$product->name}\n"
+                ."المبلغ: {$mpr->amount} {$mpr->currency}\n"
+                ."المستخدم: ".(Auth::user()?->name ?? '—')
+            );
+
+            $notifier->notifyCustomer(
+                Auth::user()?->phone,
+                "تم استلام طلب الدفع اليدوي ✅\nالمرجع: {$mpr->reference}\nالمنتج: {$product->name}\nالمبلغ: {$mpr->amount} {$mpr->currency}"
+            );
+        } catch (\Throwable $e) {
+            \Log::error('Wasender notify failed (manual payment)', ['error' => $e->getMessage()]);
+        }
 
         if ($isCodes) {
             // After creating a pending request, the product may become effectively out-of-stock.

@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\DB;
 use App\Services\Contracts\CartInterface;
+use App\Services\Wasender\WasenderNotifier;
 
 class CheckoutController extends Controller
 {
@@ -102,6 +103,31 @@ class CheckoutController extends Controller
                 // سجل الخطأ في اللوغ مثلاً
                 \Log::error('Failed to send order to ERP', $erpResponse);
             }
+
+            // WhatsApp notifications (Wasender) - should never break checkout
+            try {
+                /** @var WasenderNotifier $notifier */
+                $notifier = app(WasenderNotifier::class);
+
+                $billing = $order->addresses()->where('type', 'billing')->first();
+                $customerPhone = $billing?->phone ?: ($order->user?->phone ?? null);
+
+                $notifier->notifyAdmins(
+                    "طلب جديد ✅\n"
+                    ."رقم الطلب: {$order->number}\n"
+                    ."الإجمالي: {$order->total_price}\n"
+                    ."العميل: ".($billing?->first_name ? trim(($billing?->first_name ?? '').' '.($billing?->last_name ?? '')) : ($order->user?->name ?? 'Guest'))."\n"
+                    ."الجوال: ".($billing?->phone ?? ($order->user?->phone ?? '—'))
+                );
+
+                $notifier->notifyCustomer(
+                    $customerPhone,
+                    "تم استلام طلبك ✅\nرقم الطلب: {$order->number}\nالإجمالي: {$order->total_price}"
+                );
+            } catch (\Throwable $e) {
+                \Log::error('Wasender notify failed (checkout)', ['error' => $e->getMessage()]);
+            }
+
             return redirect()->route('shop.index')->with([
                 'success' => trans('site/site.checkout_successfully')
             ]);
