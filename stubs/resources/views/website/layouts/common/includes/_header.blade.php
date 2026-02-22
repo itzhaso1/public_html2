@@ -1,9 +1,9 @@
 <!-- شريط التحذير -->
 <div class="bg-red-600 text-white py-2 overflow-hidden relative">
     <div class="marquee flex whitespace-nowrap">
-        <span class="mx-4">تحذير: لا يوجد أرقام أو صفحات أو مواقع غير هذا. رقمنا: +9620777515306 | صفحة انستا:
+        <span class="mx-4">تحذير: لا يوجد أرقام أو صفحات أو مواقع غير هذا. رقمنا: {{ \App\Support\WhatsApp::display() }} | صفحة انستا:
             KING2GAME.COM | متجرنا: KING2GAME.COM</span>
-        <span class="mx-4">تحذير: لا يوجد أرقام أو صفحات أو مواقع غير هذا. رقمنا: +9620777515306 | صفحة انستا:
+        <span class="mx-4">تحذير: لا يوجد أرقام أو صفحات أو مواقع غير هذا. رقمنا: {{ \App\Support\WhatsApp::display() }} | صفحة انستا:
             KING2GAME.COM | متجرنا: KING2GAME.COM</span>
     </div>
 </div>
@@ -23,7 +23,10 @@
                 <a href="{{route('home')}}" class="text-white hover:text-yellow-400 font-medium">الرئيسية</a>
                 <a href="#" class="text-white hover:text-yellow-400 font-medium">المنتجات</a>
                 <a href="#" class="text-white hover:text-yellow-400 font-medium">العروض</a>
-                <a href="#" class="text-white hover:text-yellow-400 font-medium">تواصل معنا</a>
+                @php($whatsappHref = \App\Support\WhatsApp::href())
+                @if($whatsappHref)
+                    <a href="{{ $whatsappHref }}" target="_blank" rel="noopener noreferrer" class="text-white hover:text-yellow-400 font-medium">تواصل معنا</a>
+                @endif
             </div>
             <div class="md:hidden flex items-center">
                 <button id="mobile-menu-button" class="text-white focus:outline-none">
@@ -39,6 +42,9 @@
         <a href="#" class="block text-white px-3 py-2 rounded hover:bg-gray-700">الرئيسية</a>
         <a href="#" class="block text-white px-3 py-2 rounded hover:bg-gray-700">المنتجات</a>
         <a href="#" class="block text-white px-3 py-2 rounded hover:bg-gray-700">العروض</a>
-        <a href="#" class="block text-white px-3 py-2 rounded hover:bg-gray-700">تواصل معنا</a>
+        @php($whatsappHref = \App\Support\WhatsApp::href())
+        @if($whatsappHref)
+            <a href="{{ $whatsappHref }}" target="_blank" rel="noopener noreferrer" class="block text-white px-3 py-2 rounded hover:bg-gray-700">تواصل معنا</a>
+        @endif
     </div>
 </nav>

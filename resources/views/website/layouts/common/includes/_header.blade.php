@@ -1,9 +1,9 @@
 <!-- شريط التحذير -->
 <div class="bg-red-600 text-white py-2 overflow-hidden relative">
     <div class="marquee flex whitespace-nowrap">
-        <span class="mx-4">تحذير: لا يوجد أرقام أو صفحات أو مواقع غير هذا. رقمنا: +9620777515306 | صفحة انستا:
+        <span class="mx-4">تحذير: لا يوجد أرقام أو صفحات أو مواقع غير هذا. رقمنا: {{ \App\Support\WhatsApp::display() }} | صفحة انستا:
             KING2GAME.COM | متجرنا: KING2GAME.COM</span>
-        <span class="mx-4">تحذير: لا يوجد أرقام أو صفحات أو مواقع غير هذا. رقمنا: +9620777515306 | صفحة انستا:
+        <span class="mx-4">تحذير: لا يوجد أرقام أو صفحات أو مواقع غير هذا. رقمنا: {{ \App\Support\WhatsApp::display() }} | صفحة انستا:
             KING2GAME.COM | متجرنا: KING2GAME.COM</span>
     </div>
 </div>
@@ -27,7 +27,10 @@
                     <a href="{{ route('customer.purchases') }}" class="text-white hover:text-yellow-400 font-medium">مشترياتي</a>
                     <a href="{{ route('customer.profile') }}" class="text-white hover:text-yellow-400 font-medium">ملفي الشخصي</a>
                 @endauth
-                <a href="https://chat.whatsapp.com/LiEKm0hQPlB9yeToyetcbh" class="text-white hover:text-yellow-400 font-medium">تواصل معنا</a>
+                @php($whatsappHref = \App\Support\WhatsApp::href())
+                @if($whatsappHref)
+                    <a href="{{ $whatsappHref }}" target="_blank" rel="noopener noreferrer" class="text-white hover:text-yellow-400 font-medium">تواصل معنا</a>
+                @endif
                 @guest
                     <a href="{{ route('auth.login') }}" class="text-white hover:text-yellow-400 font-medium">تسجيل الدخول</a>
                 @endguest
@@ -58,7 +61,10 @@
             <a href="{{ route('customer.purchases') }}" class="block text-white px-3 py-2 rounded hover:bg-gray-700">مشترياتي</a>
             <a href="{{ route('customer.profile') }}" class="block text-white px-3 py-2 rounded hover:bg-gray-700">ملفي الشخصي</a>
         @endauth
-        <a href="https://chat.whatsapp.com/LiEKm0hQPlB9yeToyetcbh" class="block text-white px-3 py-2 rounded hover:bg-gray-700">تواصل معنا</a>
+        @php($whatsappHref = \App\Support\WhatsApp::href())
+        @if($whatsappHref)
+            <a href="{{ $whatsappHref }}" target="_blank" rel="noopener noreferrer" class="block text-white px-3 py-2 rounded hover:bg-gray-700">تواصل معنا</a>
+        @endif
         @guest
             <a href="{{ route('auth.login') }}" class="block text-white px-3 py-2 rounded hover:bg-gray-700">تسجيل الدخول</a>
         @endguest

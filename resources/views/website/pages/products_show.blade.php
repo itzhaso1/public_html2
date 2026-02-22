@@ -398,17 +398,20 @@ document.addEventListener('DOMContentLoaded', function () {
   </p>
 
   <div class="text-2xl font-bold text-blue-700 mb-4 select-all tracking-wide">
-  +966&nbsp;50&nbsp;842&nbsp;4351
-</div>
+    {{ \App\Support\WhatsApp::display() }}
+  </div>
 
 
   <div class="flex justify-center gap-3 flex-wrap">
    
 
-    <a href="https://chat.whatsapp.com/LiEKm0hQPlB9yeToyetcbh" target="_blank"
-       class="flex items-center gap-2 bg-[#25D366] text-white px-5 py-2.5 rounded-full shadow-md hover:bg-[#1ebe5d] hover:shadow-lg transition-all duration-200">
-      💬 <span class="font-semibold">تواصل عبر واتساب</span>
-    </a>
+    @php($whatsappHref = \App\Support\WhatsApp::href())
+    @if($whatsappHref)
+      <a href="{{ $whatsappHref }}" target="_blank" rel="noopener noreferrer"
+         class="flex items-center gap-2 bg-[#25D366] text-white px-5 py-2.5 rounded-full shadow-md hover:bg-[#1ebe5d] hover:shadow-lg transition-all duration-200">
+        💬 <span class="font-semibold">تواصل عبر واتساب</span>
+      </a>
+    @endif
   </div>
 
   <div class="mt-5 text-xs text-gray-400 italic">
